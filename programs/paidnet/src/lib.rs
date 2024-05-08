@@ -20,13 +20,11 @@ use self::{
 };
 
 use spl_account_compression::{
-    Noop,
     program::SplAccountCompression,
     cpi::{
-        accounts::{ VerifyLeaf },
+        accounts:: VerifyLeaf,
         verify_leaf, 
-    },
-    wrap_application_data_v1, 
+    }
 };
 
 declare_id!("AqwFRLotetpQpfVSF9pPFAR1MqB9NmY3a9fUyjJ9nBCv");
@@ -221,6 +219,7 @@ pub mod ignition_sc_crowdfunding_solana {
         user_vesting.total_amount += ido_amount;
         // update user purchase info
         user_purchase.early_purchased += purchase_amount - participant_fee;
+        user_purchase.principal += purchase_amount - participant_fee;
         user_purchase.fee += participant_fee;
         
 
@@ -230,6 +229,10 @@ pub mod ignition_sc_crowdfunding_solana {
     pub fn buy_token_in_open_pool(
         ctx: Context<BuyTokenInOpenPool>,
         purchase_amount: u64,
+        index: u32,
+        root: [u8; 32],
+        note: String,
+        user_type: String,
         purchase_bump: u8
     ) -> Result<()> {
         let pool_storage: &mut Account<PoolStorage> = &mut ctx.accounts.pool_storage_account;
@@ -246,16 +249,33 @@ pub mod ignition_sc_crowdfunding_solana {
             return err!(ErrCode::InvalidAmount);
         }
 
-        // let allow_purchase_amount: u64 = max_purchase_amount_for_early_access(
-        //     pool_storage.total_raise_amount,
-        //     pool_storage.open_pool_proportion as u64,
-        //     pool_storage.early_pool_proportion as u64
-        // );
+        let mut allow_purchase_amount: u64 = pool_storage.max_purchase_amount_for_not_kyc_user;
+
+        if user_type == "KYC_USER" {
+            // verfify leaf
+            let leaf: [u8; 32] =
+            keccak::hashv(&[note.as_bytes(), pool_storage.owner.as_ref()]).to_bytes();
+            let merkle_tree: Pubkey = ctx.accounts.merkle_tree.key();
+            let signer_seeds: &[&[&[u8]]] = &[&[
+            merkle_tree.as_ref(), // The address of the merkle tree account as a seed
+            &[*ctx.bumps.get("tree_authority").unwrap()], // The bump seed for the pda
+        ]];
+            let cpi_ctx: CpiContext<VerifyLeaf> = CpiContext::new_with_signer(
+                ctx.accounts.compression_program.to_account_info(), // The spl account compression program
+                VerifyLeaf {
+                    merkle_tree: ctx.accounts.merkle_tree.to_account_info(), // The merkle tree account to be modified
+                },
+                signer_seeds, // The seeds for pda signing
+            );
+            // Verify or Fails
+            verify_leaf(cpi_ctx, root, leaf, index)?;
+            allow_purchase_amount = pool_storage.max_purchase_amount_for_kyc_user;
+        }
 
         let user_purchase: &mut Account<UserPurchaseAccount> = &mut ctx.accounts.user_purchase_account;
-        // if user_purchase.early_purchased + purchase_amount > allow_purchase_amount {
-        //     return err!(ErrCode::ExceedMaxPurchaseAmountForEarlyAccess);
-        // }
+        if user_purchase.early_purchased + purchase_amount > allow_purchase_amount {
+            return err!(ErrCode::ExceedMaxPurchaseAmountForEarlyAccess);
+        }
 
         let participant_fee = calculate_participiant_fee(
             purchase_amount,
@@ -286,7 +306,7 @@ pub mod ignition_sc_crowdfunding_solana {
         user_vesting.total_amount += ido_amount;
         // update user purchase info
         
-        user_purchase.early_purchased += purchase_amount - participant_fee;
+        user_purchase.principal += purchase_amount - participant_fee;
         user_purchase.fee += participant_fee;
         
 
@@ -618,6 +638,9 @@ pub struct BuyTokenInOpenPool<'info> {
         bump
     )]
     pub user_vesting: Account<'info, UserVestingAccount>,
+    /// CHECK: This account is validated by the spl account compression program
+    pub merkle_tree: UncheckedAccount<'info>,
+
     pub token_program: Program<'info, Token>,
     pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,

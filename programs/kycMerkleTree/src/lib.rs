@@ -27,7 +27,7 @@ pub mod compressed_notes {
         max_buffer_size: u32, // Max buffer size of the merkle tree
     ) -> Result<()> {
         // Get the address for the merkle tree account
-        let merkle_tree = ctx.accounts.merkle_tree.key();
+        let merkle_tree: Pubkey = ctx.accounts.merkle_tree.key();
 
         // Define the seeds for pda signing
         let signer_seeds: &[&[&[u8]]] = &[&[
@@ -36,7 +36,7 @@ pub mod compressed_notes {
         ]];
 
         // Create cpi context for init_empty_merkle_tree instruction.
-        let cpi_ctx = CpiContext::new_with_signer(
+        let cpi_ctx: CpiContext<Initialize> = CpiContext::new_with_signer(
             ctx.accounts.compression_program.to_account_info(), // The spl account compression program
             Initialize {
                 authority: ctx.accounts.tree_authority.to_account_info(), // The authority for the merkle tree, using a PDA
@@ -54,21 +54,21 @@ pub mod compressed_notes {
     // Instruction for appending a note to a tree.
     pub fn append_note(ctx: Context<NoteAccounts>, note: String) -> Result<()> {
         // Hash the "note message" which will be stored as leaf node in the merkle tree
-        let leaf_node =
+        let leaf_node: [u8; 32] =
             keccak::hashv(&[note.as_bytes(), ctx.accounts.owner.key().as_ref()]).to_bytes();
         // Create a new "note log" using the leaf node hash and note.
-        let note_log = NoteLog::new(leaf_node.clone(), ctx.accounts.owner.key().clone(), note);
+        let note_log: NoteLog = NoteLog::new(leaf_node.clone(), ctx.accounts.owner.key().clone(), note);
         // Log the "note log" data using noop program
         wrap_application_data_v1(note_log.try_to_vec()?, &ctx.accounts.log_wrapper)?;
         // Get the address for the merkle tree account
-        let merkle_tree = ctx.accounts.merkle_tree.key();
+        let merkle_tree: Pubkey = ctx.accounts.merkle_tree.key();
         // Define the seeds for pda signing
         let signer_seeds: &[&[&[u8]]] = &[&[
             merkle_tree.as_ref(), // The address of the merkle tree account as a seed
             &[*ctx.bumps.get("tree_authority").unwrap()], // The bump seed for the pda
         ]];
         // Create a new cpi context and append the leaf node to the merkle tree.
-        let cpi_ctx = CpiContext::new_with_signer(
+        let cpi_ctx: CpiContext<Modify> = CpiContext::new_with_signer(
             ctx.accounts.compression_program.to_account_info(), // The spl account compression program
             Modify {
                 authority: ctx.accounts.tree_authority.to_account_info(), // The authority for the merkle tree, using a PDA
@@ -89,10 +89,10 @@ pub mod compressed_notes {
         old_note: String,
         new_note: String,
     ) -> Result<()> {
-        let old_leaf =
+        let old_leaf: [u8; 32] =
             keccak::hashv(&[old_note.as_bytes(), ctx.accounts.owner.key().as_ref()]).to_bytes();
 
-        let merkle_tree = ctx.accounts.merkle_tree.key();
+        let merkle_tree: Pubkey = ctx.accounts.merkle_tree.key();
 
         // Define the seeds for pda signing
         let signer_seeds: &[&[&[u8]]] = &[&[
@@ -107,7 +107,7 @@ pub mod compressed_notes {
                 return Ok(());
             }
 
-            let cpi_ctx = CpiContext::new_with_signer(
+            let cpi_ctx: CpiContext<VerifyLeaf> = CpiContext::new_with_signer(
                 ctx.accounts.compression_program.to_account_info(), // The spl account compression program
                 VerifyLeaf {
                     merkle_tree: ctx.accounts.merkle_tree.to_account_info(), // The merkle tree account to be modified
@@ -118,17 +118,17 @@ pub mod compressed_notes {
             verify_leaf(cpi_ctx, root, old_leaf, index)?;
         }
 
-        let new_leaf =
+        let new_leaf: [u8; 32] =
             keccak::hashv(&[new_note.as_bytes(), ctx.accounts.owner.key().as_ref()]).to_bytes();
 
         // Log out for indexers
-        let note_log = NoteLog::new(new_leaf.clone(), ctx.accounts.owner.key().clone(), new_note);
+        let note_log: NoteLog = NoteLog::new(new_leaf.clone(), ctx.accounts.owner.key().clone(), new_note);
         // Log the "note log" data using noop program
         wrap_application_data_v1(note_log.try_to_vec()?, &ctx.accounts.log_wrapper)?;
 
         // replace leaf
         {
-            let cpi_ctx = CpiContext::new_with_signer(
+            let cpi_ctx: CpiContext<Modify> = CpiContext::new_with_signer(
                 ctx.accounts.compression_program.to_account_info(), // The spl account compression program
                 Modify {
                     authority: ctx.accounts.tree_authority.to_account_info(), // The authority for the merkle tree, using a PDA
