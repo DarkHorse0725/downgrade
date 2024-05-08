@@ -2,6 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
+kycMerkleTree = "6K4wK6eLs4d5VEgJztdAKchepBpXwjJ85DrPVtVbT5RW"
 paidnet = "AqwFRLotetpQpfVSF9pPFAR1MqB9NmY3a9fUyjJ9nBCv"
 
 [registry]
