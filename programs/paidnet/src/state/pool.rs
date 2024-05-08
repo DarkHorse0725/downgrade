@@ -37,10 +37,10 @@ pub struct OfferedCurrency {
 
 #[account]
 pub struct UserPurchaseAccount {
-    pub principal: u64,
-    pub fee: u64,
-    pub withdrawn: u64,
-    pub early_purchased: u64,
+    pub principal: u64, // based on purchase token
+    pub fee: u64,       // based on purchase token
+    pub withdrawn: u64, // based on ido token
+    pub early_purchased: u64, // based on purchase token
 }
 
 #[account]

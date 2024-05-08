@@ -32,4 +32,6 @@ pub enum ErrCode {
     TimeOutBuyIDOToken,
     #[msg("Exceed max purchase amount for early access")]
     ExceedMaxPurchaseAmountForEarlyAccess,
+    #[msg("Already claimed total amount")]
+    AlreadyClaimedTotoalAmount,
 }

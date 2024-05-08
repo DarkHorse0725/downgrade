@@ -30,7 +30,7 @@ use spl_account_compression::{
 declare_id!("AqwFRLotetpQpfVSF9pPFAR1MqB9NmY3a9fUyjJ9nBCv");
 
 #[program]
-pub mod ignition_sc_crowdfunding_solana {
+pub mod paidnet {
     use pool_logic::{ MAX_TGE_DATE_ADJUSTMENT, MAX_TGE_DATE_ADJUSTMENT_ATTEMPTS };
 
     use self::pool_logic::max_purchase_amount_for_early_access;
@@ -213,7 +213,7 @@ pub mod ignition_sc_crowdfunding_solana {
 
         // update pool info
         pool_storage.purchase_bump = purchase_bump;
-        pool_storage.purchased_amount += purchase_amount - participant_fee;
+        pool_storage.purchased_amount += purchase_amount;
         // update user vesting info
         let user_vesting: &mut Account<UserVestingAccount> = &mut ctx.accounts.user_vesting;
         user_vesting.total_amount += ido_amount;
@@ -300,7 +300,7 @@ pub mod ignition_sc_crowdfunding_solana {
 
         // update pool info
         pool_storage.purchase_bump = purchase_bump;
-        pool_storage.purchased_amount += purchase_amount - participant_fee;
+        pool_storage.purchased_amount += purchase_amount;
         // update user vesting info
         let user_vesting: &mut Account<UserVestingAccount> = &mut ctx.accounts.user_vesting;
         user_vesting.total_amount += ido_amount;
@@ -385,9 +385,16 @@ pub mod ignition_sc_crowdfunding_solana {
     // when success
     pub fn unlock_ido(ctx: Context<UnlockIDO>) -> Result<()> {
         let vesting_storage: &Account<VestingStorage> = &ctx.accounts.vesting_storage_account;
+        let user_purchase: &mut Account<UserPurchaseAccount> = &mut ctx.accounts.user_purchase_account;
+        let user_vesting: &mut Account<UserVestingAccount> = &mut ctx.accounts.user_vesting;
         if !vesting_storage.claimable {
             return err!(ErrCode::NotClaimable);
         }
+
+        if user_purchase.withdrawn >= user_vesting.total_amount {
+            return err!(ErrCode::AlreadyClaimedTotoalAmount);
+        }
+
         if ctx.accounts.user_token.data_is_empty() {
             let cpi_accounts: Create = Create {
                 payer: ctx.accounts.signer.to_account_info(),
@@ -402,8 +409,6 @@ pub mod ignition_sc_crowdfunding_solana {
             associated_token::create(cpi_ctx)?;
         }
         // check vesting amount
-        let user_purchase: &mut Account<UserPurchaseAccount> = &mut ctx.accounts.user_purchase_account;
-        let user_vesting: &mut Account<UserVestingAccount> = &mut ctx.accounts.user_vesting;
         let clock: Clock = Clock::get()?;
         let claimable_amount: u64 = calculate_claimable_amount(
             user_vesting.total_amount,
