@@ -583,6 +583,7 @@ pub struct BuyTokenInEarlyPool<'info> {
     pub signer: Signer<'info>,
 
     pub ido_mint: Account<'info, Mint>,
+    pub purchase_mint: Account<'info, Mint>,
     #[account(mut)]
     pub pool_storage_account: Account<'info, PoolStorage>,
     pub vesting_storage_account: Account<'info, VestingStorage>,
@@ -590,10 +591,25 @@ pub struct BuyTokenInEarlyPool<'info> {
     #[account(mut)]
     pub user_purchase_token: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        init_if_needed,
+        payer = signer,
+        seeds = [pool_storage_account.key().as_ref(), purchase_mint.key().as_ref()],
+        bump,
+        owner = token_program.key(),
+        rent_exempt = enforce,
+        token::mint = purchase_mint,
+        token::authority = purchase_vault
+    )]
     pub purchase_vault: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = size_of::<UserPurchaseAccount>() +8,
+        seeds = [pool_storage_account.key().as_ref(), signer.key().as_ref()],
+        bump
+    )]
     pub user_purchase_account: Account<'info, UserPurchaseAccount>,
 
     #[account(

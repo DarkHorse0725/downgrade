@@ -193,57 +193,81 @@ describe("paidnet", () => {
     }).rpc();
     console.log("Your transaction signature", tx);
   });
-  // it ("Buy Token", async () => {
-  //   const amount = new BN(100 * 10 ** 9);
+  it ("Buy Token in early pool", async () => {
+    const amount = new BN(100 * 10 ** 9);
 
-  //   const userPurchaseToken = await getOrCreateAssociatedTokenAccount(
-  //     connection,
-  //     owner.payer,
-  //     purchaseMint,
-  //     owner.publicKey
-  //   );
+    const userPurchaseToken = await getOrCreateAssociatedTokenAccount(
+      connection,
+      owner.payer,
+      purchaseMint,
+      owner.publicKey
+    );
 
-  //   const [vestingStorageAccount, _] = PublicKey.findProgramAddressSync(
-  //     [
-  //       anchor.utils.bytes.utf8.encode('vesting_storage'),
-  //       owner.publicKey.toBuffer()
-  //     ],
-  //     program.programId
-  //   );
+    const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode('vesting_storage'),
+        idoMint.toBuffer(),
+        purchaseMint.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
 
-  //   const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
-  //     [
-  //       anchor.utils.bytes.utf8.encode('pool_storage'),
-  //       owner.publicKey.toBuffer()
-  //     ],
-  //     program.programId
-  //   );
+    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode('pool_storage'),
+        idoMint.toBuffer(),
+        purchaseMint.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
 
-  //   const [purchaseVault, purchaseBump] = PublicKey.findProgramAddressSync(
-  //     [
-  //       poolStorageAccount.toBuffer(),
-  //       owner.publicKey.toBuffer()
-  //     ],
-  //     program.programId
-  //   );
+    const [purchaseVault, purchaseBump] = PublicKey.findProgramAddressSync(
+      [
+        poolStorageAccount.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
 
-  //   const tx = await program.methods.buyToken(
-  //     amount,
-  //     purchaseBump
-  //   ).accounts({
-  //     purchaseMint,
-  //     idoMint,
-  //     userPurchaseToken: userPurchaseToken.address,
-  //     vestingStorageAccount,
-  //     poolStorageAccount
-  //   }).rpc();
-  //   console.log("Your transaction signature", tx);
-  //   const vesting = await program.account.userVestingAccount.all();
-  //   const vestingData = {
-  //     publicKey: vesting[0].publicKey.toBase58(),
-  //     totalAmount: vesting[0].account.totalAmount.toString(),
-  //     claimedAmount: vesting[0].account.claimedAmount.toString()
-  //   }
-  //   console.table(vestingData);
-  // });
+    const [userPurchaseAccount, _] = PublicKey.findProgramAddressSync(
+      [
+        poolStorageAccount.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+
+    const [userVesting, __] = PublicKey.findProgramAddressSync(
+      [
+        idoMint.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+
+
+    const tx = await program.methods.buyTokenInEarlyPool(
+      amount,
+      purchaseBump
+    ).accounts({
+      idoMint,
+      userPurchaseToken: userPurchaseToken.address,
+      vestingStorageAccount,
+      poolStorageAccount,
+      purchaseVault,
+      userPurchaseAccount,
+      purchaseMint,
+      userVesting
+    }).rpc();
+    console.log("Your transaction signature", tx);
+    const vesting = await program.account.userVestingAccount.all();
+    const vestingData = {
+      publicKey: vesting[0].publicKey.toBase58(),
+      totalAmount: vesting[0].account.totalAmount.toString(),
+      claimedAmount: vesting[0].account.claimedAmount.toString()
+    }
+    console.table(vestingData);
+  });
 });
