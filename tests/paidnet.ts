@@ -4,6 +4,7 @@ import { Paidnet } from "../target/types/paidnet";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { PublicKey } from "@solana/web3.js";
 import { BN } from "bn.js";
+import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
 
 describe("paidnet", () => {
   // Configure the client to use the local cluster.
@@ -21,8 +22,8 @@ describe("paidnet", () => {
 
   const owner = provider.wallet as NodeWallet;
 
-  const idoMint = new PublicKey("97HwJNGk4BfF8CTd6E61TsoG4ERTTZiyTCzhgJ9jsPv9");
-  const purchaseMint = new PublicKey("EEvB5u4qmhLKdW6bxLAz2KutpAjV5NDkJkUD1gKBNJmH");
+  const idoMint = new PublicKey("7iRnKFvRgzbmMbbgYYR9QSANLHvXaV9Lv7QnPe7fyjsE");
+  const purchaseMint = new PublicKey("CBNdwTxCwVazfUQgzXZ8ZVbeg25prC5aHrdekFrmg6TD");
   const decimals = 9;
 
   it("Create Pool!", async () => {
@@ -156,38 +157,42 @@ describe("paidnet", () => {
     }).rpc();
   });
   
-  // it ("Fund IDO Token", async () => {
-  //   const amount = new BN(100 * 10 ** 9);
-  //   const [vestingStorage, _] = PublicKey.findProgramAddressSync(
-  //     [
-  //       anchor.utils.bytes.utf8.encode('vesting_storage'),
-  //       owner.publicKey.toBuffer()
-  //     ],
-  //     program.programId
-  //   );
-  //   const [vault, bump] = PublicKey.findProgramAddressSync(
-  //     [
-  //       vestingStorage.toBuffer(),
-  //       idoMint.toBuffer()
-  //     ],
-  //     program.programId
-  //   );
+  it ("Fund IDO Token", async () => {
+    const amount = new BN(100 * 10 ** 9);
+    const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode('vesting_storage'),
+        idoMint.toBuffer(),
+        purchaseMint.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+    const [vault, bump] = PublicKey.findProgramAddressSync(
+      [
+        vestingStorageAccount.toBuffer(),
+        idoMint.toBuffer()
+      ],
+      program.programId
+    );
 
-  //   const userToken = await getOrCreateAssociatedTokenAccount(
-  //     connection,
-  //     owner.payer,
-  //     idoMint,
-  //     owner.publicKey
-  //   )
-  //   const tx = await program.methods.fundIdoToken(
-  //     amount,
-  //     bump
-  //   ).accounts({
-  //     idoMint,
-  //     userToken: userToken.address
-  //   }).rpc();
-  //   console.log("Your transaction signature", tx);
-  // });
+    const userToken = await getOrCreateAssociatedTokenAccount(
+      connection,
+      owner.payer,
+      idoMint,
+      owner.publicKey
+    )
+    const tx = await program.methods.fundIdoToken(
+      amount,
+      bump
+    ).accounts({
+      idoMint,
+      userToken: userToken.address,
+      vestingStorageAccount,
+      vault
+    }).rpc();
+    console.log("Your transaction signature", tx);
+  });
   // it ("Buy Token", async () => {
   //   const amount = new BN(100 * 10 ** 9);
 

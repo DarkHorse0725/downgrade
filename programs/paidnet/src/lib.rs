@@ -15,7 +15,7 @@ use crate::error::ErrCode;
 use crate::state::{ PoolStorage, VestingStorage };
 use anchor_spl::associated_token::{ self, Create };
 use self::{
-    pool_logic::{ calculate_participiant_fee, PERCENTAGE_DENOMINATOR },
+    pool_logic::{ calculate_participiant_fee, PERCENTAGE_DENOMINATOR, MAX_TGE_DATE_ADJUSTMENT, MAX_TGE_DATE_ADJUSTMENT_ATTEMPTS, max_purchase_amount_for_early_access  },
     vesting_logic::calculate_claimable_amount,
 };
 
@@ -31,9 +31,6 @@ declare_id!("AqwFRLotetpQpfVSF9pPFAR1MqB9NmY3a9fUyjJ9nBCv");
 
 #[program]
 pub mod paidnet {
-    use pool_logic::{ MAX_TGE_DATE_ADJUSTMENT, MAX_TGE_DATE_ADJUSTMENT_ATTEMPTS };
-
-    use self::pool_logic::max_purchase_amount_for_early_access;
 
     use super::*;
 
@@ -511,11 +508,7 @@ pub struct FundIDO<'info> {
     )]
     pub vault: Account<'info, TokenAccount>,
 
-    #[account(
-        mut,
-        seeds = [b"vesting_storage", signer.key().as_ref()],
-        bump
-    )]
+    #[account(mut)]
     pub vesting_storage_account: Account<'info, VestingStorage>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
