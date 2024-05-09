@@ -127,6 +127,34 @@ describe("paidnet", () => {
       vestingStorageAccount
     }).rpc();
   });
+
+  it ("Update TGE date", async () => {
+    const tgeDate = new BN(Math.floor(Date.now() / 1000) + 20);
+    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode('pool_storage'),
+        idoMint.toBuffer(),
+        purchaseMint.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+    const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode('vesting_storage'),
+        idoMint.toBuffer(),
+        purchaseMint.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+    const tx = await program.methods.updateTgeDate(
+      tgeDate
+    ).accounts({
+      poolStorageAccount,
+      vestingStorageAccount
+    }).rpc();
+  });
   
   // it ("Fund IDO Token", async () => {
   //   const amount = new BN(100 * 10 ** 9);
