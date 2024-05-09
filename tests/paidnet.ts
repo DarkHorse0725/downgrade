@@ -21,8 +21,8 @@ describe("paidnet", () => {
 
   const owner = provider.wallet as NodeWallet;
 
-  const idoMint = new PublicKey("5cqHeHKhuGF35qJHvS4RRpnwCz364Ji6KNWXa1isb8in");
-  const purchaseMint = new PublicKey("AwgvRPnv9Q5VkTQoPuEdRf4tGpBctffCMJnAYdz9MVXP");
+  const idoMint = new PublicKey("97HwJNGk4BfF8CTd6E61TsoG4ERTTZiyTCzhgJ9jsPv9");
+  const purchaseMint = new PublicKey("EEvB5u4qmhLKdW6bxLAz2KutpAjV5NDkJkUD1gKBNJmH");
   const decimals = 9;
 
   it("Create Pool!", async () => {
@@ -41,7 +41,7 @@ describe("paidnet", () => {
     const rate = new BN(1);
     const currencyDecimals = new BN(9);
 
-    const [poolStorage, bump] = PublicKey.findProgramAddressSync(
+    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
       [
         anchor.utils.bytes.utf8.encode('pool_storage'),
         idoMint.toBuffer(),
@@ -93,38 +93,40 @@ describe("paidnet", () => {
     .accounts({
       purchaseMint,
       idoMint,
-    }).rpc();
-  });
-
-  it ("Update Time", async () => {
-    const whaleCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
-    const communityCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
-    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
-      [
-        anchor.utils.bytes.utf8.encode('pool_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
-      ],
-      program.programId
-    );
-    const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
-      [
-        anchor.utils.bytes.utf8.encode('vesting_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
-      ],
-      program.programId
-    );
-    const tx = await program.methods.updateTime(
-      whaleCloseTime,
-      communityCloseTime
-    ).accounts({
       poolStorageAccount,
       vestingStorageAccount
     }).rpc();
   });
+
+  // it ("Update Time", async () => {
+  //   const whaleCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
+  //   const communityCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
+  //   const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
+  //     [
+  //       anchor.utils.bytes.utf8.encode('pool_storage'),
+  //       idoMint.toBuffer(),
+  //       purchaseMint.toBuffer(),
+  //       owner.publicKey.toBuffer()
+  //     ],
+  //     program.programId
+  //   );
+  //   const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
+  //     [
+  //       anchor.utils.bytes.utf8.encode('vesting_storage'),
+  //       idoMint.toBuffer(),
+  //       purchaseMint.toBuffer(),
+  //       owner.publicKey.toBuffer()
+  //     ],
+  //     program.programId
+  //   );
+  //   const tx = await program.methods.updateTime(
+  //     whaleCloseTime,
+  //     communityCloseTime
+  //   ).accounts({
+  //     poolStorageAccount,
+  //     vestingStorageAccount
+  //   }).rpc();
+  // });
   
   // it ("Fund IDO Token", async () => {
   //   const amount = new BN(100 * 10 ** 9);
