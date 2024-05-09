@@ -98,35 +98,35 @@ describe("paidnet", () => {
     }).rpc();
   });
 
-  // it ("Update Time", async () => {
-  //   const whaleCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
-  //   const communityCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
-  //   const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
-  //     [
-  //       anchor.utils.bytes.utf8.encode('pool_storage'),
-  //       idoMint.toBuffer(),
-  //       purchaseMint.toBuffer(),
-  //       owner.publicKey.toBuffer()
-  //     ],
-  //     program.programId
-  //   );
-  //   const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
-  //     [
-  //       anchor.utils.bytes.utf8.encode('vesting_storage'),
-  //       idoMint.toBuffer(),
-  //       purchaseMint.toBuffer(),
-  //       owner.publicKey.toBuffer()
-  //     ],
-  //     program.programId
-  //   );
-  //   const tx = await program.methods.updateTime(
-  //     whaleCloseTime,
-  //     communityCloseTime
-  //   ).accounts({
-  //     poolStorageAccount,
-  //     vestingStorageAccount
-  //   }).rpc();
-  // });
+  it ("Update Time", async () => {
+    const whaleCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
+    const communityCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
+    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode('pool_storage'),
+        idoMint.toBuffer(),
+        purchaseMint.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+    const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode('vesting_storage'),
+        idoMint.toBuffer(),
+        purchaseMint.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+    const tx = await program.methods.updateTime(
+      whaleCloseTime,
+      communityCloseTime
+    ).accounts({
+      poolStorageAccount,
+      vestingStorageAccount
+    }).rpc();
+  });
   
   // it ("Fund IDO Token", async () => {
   //   const amount = new BN(100 * 10 ** 9);
