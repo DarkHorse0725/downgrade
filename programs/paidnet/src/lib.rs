@@ -72,25 +72,7 @@ pub mod paidnet {
 
     // when failed
     pub fn user_withdraw_purchase(ctx: Context<UserWithdrawPurchase>, amount: u64) -> Result<()> {
-        let pool_storage: &mut Account<PoolStorage> = &mut ctx.accounts.pool_storage_account;
-
-        // send spl-token
-        let seeds: &[&[u8]; 2] = &[
-            pool_storage.to_account_info().key.as_ref(),
-            &[pool_storage.purchase_bump],
-        ];
-        let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
-        let cpi_accounts: Transfer = Transfer {
-            from: ctx.accounts.purchase_vault.to_account_info(),
-            to: ctx.accounts.user_purchase_token.to_account_info(),
-            authority: ctx.accounts.purchase_vault.to_account_info(),
-        };
-        let cpi_program: AccountInfo = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts).with_signer(
-            signer
-        );
-        token::transfer(cpi_ctx, amount)?;
-        Ok(())
+        user_withdraw_purchase_handler(ctx, amount)
     }
 
     // when success
@@ -158,31 +140,6 @@ pub mod paidnet {
         token::transfer(cpi_ctx, claimable_amount)?;
         Ok(())
     }
-}
-
-#[derive(Accounts)]
-pub struct UserWithdrawPurchase<'info> {
-    #[account(mut)]
-    pub signer: Signer<'info>,
-
-    #[account(mut)]
-    pub user_purchase_token: Account<'info, TokenAccount>,
-
-    #[account(mut)]
-    pub user_vesting: Account<'info, UserVestingAccount>,
-
-    #[account(mut)]
-    pub user_purchase_account: Account<'info, UserPurchaseAccount>,
-
-    #[account(mut, constraint = signer.key() == pool_storage_account.owner)]
-    pub pool_storage_account: Account<'info, PoolStorage>,
-
-    #[account(mut)]
-    pub purchase_vault: Account<'info, TokenAccount>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]

@@ -5,6 +5,7 @@ pub mod buy_token_in_early_pool;
 pub mod buy_token_in_open_pool;
 pub mod fund_ido_token;
 pub mod withdraw_ido_token;
+pub mod user_withdraw_purchase;
 
 pub use create_pool::*;
 pub use update_time::*;
@@ -13,3 +14,4 @@ pub use buy_token_in_early_pool::*;
 pub use buy_token_in_open_pool::*;
 pub use fund_ido_token::*;
 pub use withdraw_ido_token::*;
+pub use user_withdraw_purchase::*;

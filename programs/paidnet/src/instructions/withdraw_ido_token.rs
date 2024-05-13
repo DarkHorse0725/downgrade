@@ -31,9 +31,9 @@ pub struct WithdrawIDOToken<'info> {
 impl<'info> WithdrawIDOToken<'info> {
     fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         CpiContext::new(self.token_program.to_account_info(), Transfer {
-            from: self.user_token.to_account_info(),
+            from: self.ido_vault.to_account_info(),
             to: self.user_token.to_account_info(),
-            authority: self.signer.to_account_info(),
+            authority: self.ido_vault.to_account_info(),
         })
     }
 }
