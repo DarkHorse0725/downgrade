@@ -25,7 +25,6 @@ pub struct PoolStorage {
     pub purchased_amount_in_early_access: u64,
     pub purchased_amount: u64,
     pub fund_claimed_amount: u64,
-    pub bump: u8,
     pub purchase_bump: u8,
 }
 

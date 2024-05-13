@@ -13,7 +13,6 @@ pub struct VestingStorage {
     pub claimable: bool,
     pub emergency_cancelled: bool,
     pub private_raise: bool,
-    pub bump: u8,
     pub owner: Pubkey,
     pub vault_bump: u8,
     pub initial_tge_date: i64,
