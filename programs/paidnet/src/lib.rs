@@ -4,30 +4,16 @@ pub mod vesting_logic;
 pub mod pool_logic;
 mod instructions;
 
-use anchor_lang::{
-    prelude::*, 
-    solana_program::keccak,
-};
+use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{ self, Transfer, TokenAccount, Mint, Token };
-use std::mem::size_of;
 use state::{ UserPurchaseAccount, UserVestingAccount };
 use crate::error::ErrCode;
 use crate::state::*;
 use anchor_spl::associated_token::{ self, Create };
-use self::{
-    pool_logic:: calculate_participiant_fee,
-    vesting_logic::calculate_claimable_amount,
-};
+use crate::vesting_logic::calculate_claimable_amount;
 use instructions::*;
 
-use spl_account_compression::{
-    program::SplAccountCompression,
-    cpi::{
-        accounts:: VerifyLeaf,
-        verify_leaf, 
-    }
-};
 
 declare_id!("AqwFRLotetpQpfVSF9pPFAR1MqB9NmY3a9fUyjJ9nBCv");
 
@@ -72,82 +58,7 @@ pub mod paidnet {
         user_type: String,
         purchase_bump: u8
     ) -> Result<()> {
-        let pool_storage: &mut Account<PoolStorage> = &mut ctx.accounts.pool_storage_account;
-        // validate time
-        let clock: Clock = Clock::get()?;
-        if clock.unix_timestamp > pool_storage.open_pool_close_time {
-            return err!(ErrCode::TimeOutBuyIDOToken);
-        }
-        if clock.unix_timestamp < pool_storage.open_pool_open_time {
-            return err!(ErrCode::TimeOutBuyIDOToken);
-        }
-        // validate amount
-        if purchase_amount == 0 {
-            return err!(ErrCode::InvalidAmount);
-        }
-
-        let mut allow_purchase_amount: u64 = pool_storage.max_purchase_amount_for_not_kyc_user;
-
-        if user_type == "KYC_USER" {
-            // verfify leaf
-            let leaf: [u8; 32] =
-            keccak::hashv(&[note.as_bytes(), pool_storage.owner.as_ref()]).to_bytes();
-            let merkle_tree: Pubkey = ctx.accounts.merkle_tree.key();
-            let signer_seeds: &[&[&[u8]]] = &[&[
-            merkle_tree.as_ref(), // The address of the merkle tree account as a seed
-            &[*ctx.bumps.get("tree_authority").unwrap()], // The bump seed for the pda
-        ]];
-            let cpi_ctx: CpiContext<VerifyLeaf> = CpiContext::new_with_signer(
-                ctx.accounts.compression_program.to_account_info(), // The spl account compression program
-                VerifyLeaf {
-                    merkle_tree: ctx.accounts.merkle_tree.to_account_info(), // The merkle tree account to be modified
-                },
-                signer_seeds, // The seeds for pda signing
-            );
-            // Verify or Fails
-            verify_leaf(cpi_ctx, root, leaf, index)?;
-            allow_purchase_amount = pool_storage.max_purchase_amount_for_kyc_user;
-        }
-
-        let user_purchase: &mut Account<UserPurchaseAccount> = &mut ctx.accounts.user_purchase_account;
-        if user_purchase.early_purchased + purchase_amount > allow_purchase_amount {
-            return err!(ErrCode::ExceedMaxPurchaseAmountForEarlyAccess);
-        }
-
-        let participant_fee = calculate_participiant_fee(
-            purchase_amount,
-            pool_storage.early_pool_participation_fee_percentage
-        );
-        let ido_amount: u64 =
-            (purchase_amount - participant_fee) * pool_storage.offered_currency.rate;
-        let vesting_storage: &Account<VestingStorage> = &ctx.accounts.vesting_storage_account;
-        if !vesting_storage.funded {
-            return err!(ErrCode::NotFunded);
-        }
-
-        // send token to purchase vault
-        let cpi_accounts: Transfer = Transfer {
-            from: ctx.accounts.user_purchase_token.to_account_info(),
-            to: ctx.accounts.purchase_vault.to_account_info(),
-            authority: ctx.accounts.signer.to_account_info(),
-        };
-        let cpi_program: AccountInfo = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_ctx, purchase_amount)?;
-
-        // update pool info
-        pool_storage.purchase_bump = purchase_bump;
-        pool_storage.purchased_amount += purchase_amount;
-        // update user vesting info
-        let user_vesting: &mut Account<UserVestingAccount> = &mut ctx.accounts.user_vesting;
-        user_vesting.total_amount += ido_amount;
-        // update user purchase info
-        
-        user_purchase.principal += purchase_amount - participant_fee;
-        user_purchase.fee += participant_fee;
-        
-
-        Ok(())
+        buy_token_in_open_pool_handler(ctx, purchase_amount, index, root, note, user_type, purchase_bump)
     }
 
     pub fn fund_ido_token(ctx: Context<FundIDO>, amount: u64, bump: u8) -> Result<()> {
@@ -345,40 +256,6 @@ pub struct WithdrawIDOToken<'info> {
     pub system_program: Program<'info, System>,
 }
 
-#[derive(Accounts)]
-pub struct BuyTokenInOpenPool<'info> {
-    #[account(mut)]
-    pub signer: Signer<'info>,
-
-    pub ido_mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub pool_storage_account: Account<'info, PoolStorage>,
-    pub vesting_storage_account: Account<'info, VestingStorage>,
-
-    #[account(mut)]
-    pub user_purchase_token: Account<'info, TokenAccount>,
-
-    #[account(mut)]
-    pub purchase_vault: Account<'info, TokenAccount>,
-
-    #[account(mut)]
-    pub user_purchase_account: Account<'info, UserPurchaseAccount>,
-
-    #[account(
-        init_if_needed,
-        payer = signer,
-        space = size_of::<UserVestingAccount>() + 8,
-        seeds = [ido_mint.key().as_ref(), signer.key().as_ref()],
-        bump
-    )]
-    pub user_vesting: Account<'info, UserVestingAccount>,
-    /// CHECK: This account is validated by the spl account compression program
-    pub merkle_tree: UncheckedAccount<'info>,
-
-    pub token_program: Program<'info, Token>,
-    pub compression_program: Program<'info, SplAccountCompression>,
-    pub system_program: Program<'info, System>,
-}
 
 #[derive(Accounts)]
 pub struct UserWithdrawPurchase<'info> {
