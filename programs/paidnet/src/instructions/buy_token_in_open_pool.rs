@@ -123,7 +123,7 @@ pub fn buy_token_in_open_pool_handler(
     // send token to purchase vault
     token::transfer(ctx.accounts.transfer_ctx(), purchase_amount)?;
     // update pool info
-    let pool = &mut ctx.accounts.pool_storage_account;
+    let pool: &mut Account<PoolStorage> = &mut ctx.accounts.pool_storage_account;
     pool.purchase_bump = purchase_bump;
     pool.purchased_amount += purchase_amount;
     // update user vesting info

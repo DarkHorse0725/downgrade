@@ -62,49 +62,12 @@ pub mod paidnet {
     }
 
     pub fn fund_ido_token(ctx: Context<FundIDO>, amount: u64, bump: u8) -> Result<()> {
-        // transfer token
-        let cpi_accounts: Transfer = Transfer {
-            from: ctx.accounts.user_token.to_account_info(),
-            to: ctx.accounts.vault.to_account_info(),
-            authority: ctx.accounts.signer.to_account_info(),
-        };
-        let cpi_program: AccountInfo = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_ctx, amount)?;
-        // update info
-        let vesting_storage: &mut Account<
-            '_,
-            VestingStorage
-        > = &mut ctx.accounts.vesting_storage_account;
-        vesting_storage.ido_token = ctx.accounts.ido_mint.key();
-        vesting_storage.funded = true;
-        vesting_storage.vault_bump = bump;
-        vesting_storage.total_funded_amount += amount;
-        Ok(())
+        fund_ido_handler(ctx, amount, bump)
     }
 
     // when failed
     pub fn withdraw_ido_token(ctx: Context<WithdrawIDOToken>, amount: u64) -> Result<()> {
-        let vesting_storage: &mut Account<
-            '_,
-            VestingStorage
-        > = &mut ctx.accounts.vesting_storage_account;
-        let seeds: &[&[u8]; 2] = &[
-            vesting_storage.to_account_info().key.as_ref(),
-            &[vesting_storage.vault_bump],
-        ];
-        let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
-        let cpi_accounts: Transfer = Transfer {
-            from: ctx.accounts.vault.to_account_info(),
-            to: ctx.accounts.user_token.to_account_info(),
-            authority: ctx.accounts.vault.to_account_info(),
-        };
-        let cpi_program: AccountInfo = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts).with_signer(
-            signer
-        );
-        token::transfer(cpi_ctx, amount)?;
-        Ok(())
+        withdraw_ido_handler(ctx, amount)
     }
 
     // when failed
@@ -196,66 +159,6 @@ pub mod paidnet {
         Ok(())
     }
 }
-
-
-
-#[derive(Accounts)]
-pub struct FundIDO<'info> {
-    #[account(mut)]
-    pub signer: Signer<'info>,
-    #[account(mut)]
-    pub user_token: Account<'info, TokenAccount>,
-
-    pub ido_mint: Account<'info, Mint>,
-
-    #[account(
-        init_if_needed,
-        payer = signer,
-        seeds = [vesting_storage_account.key().as_ref(), ido_mint.key().as_ref()],
-        bump,
-        owner = token_program.key(),
-        rent_exempt = enforce,
-        token::mint = ido_mint,
-        token::authority = vault
-    )]
-    pub vault: Account<'info, TokenAccount>,
-
-    #[account(mut)]
-    pub vesting_storage_account: Account<'info, VestingStorage>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct WithdrawIDOToken<'info> {
-    #[account(mut, constraint = signer.key() == vesting_storage_account.owner)]
-    pub signer: Signer<'info>,
-    #[account(mut)]
-    pub user_token: Account<'info, TokenAccount>,
-
-    pub ido_mint: Account<'info, Mint>,
-
-    #[account(
-        mut,
-        seeds = [vesting_storage_account.key().as_ref(), ido_mint.key().as_ref()],
-        bump = vesting_storage_account.vault_bump,
-    )]
-    pub vault: Account<'info, TokenAccount>,
-
-    #[account(
-        mut,
-        seeds = [b"vesting_storage", signer.key().as_ref()],
-        bump
-    )]
-    pub vesting_storage_account: Account<'info, VestingStorage>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
-}
-
 
 #[derive(Accounts)]
 pub struct UserWithdrawPurchase<'info> {
