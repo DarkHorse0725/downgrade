@@ -2,9 +2,10 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Paidnet } from "../target/types/paidnet";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { BN } from "bn.js";
 import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 
 describe("paidnet", () => {
   // Configure the client to use the local cluster.
@@ -26,6 +27,8 @@ describe("paidnet", () => {
   const purchaseMint = new PublicKey("CBNdwTxCwVazfUQgzXZ8ZVbeg25prC5aHrdekFrmg6TD");
   const decimals = 9;
 
+  const pool = Keypair.generate();
+
   it("Create Pool!", async () => {
     // Add your test here.
     const maxPurchaseForKycUser = new BN(100 * 10 ** decimals);
@@ -42,16 +45,6 @@ describe("paidnet", () => {
     const rate = new BN(1);
     const currencyDecimals = new BN(9);
 
-    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
-      [
-        anchor.utils.bytes.utf8.encode('pool_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
-      ],
-      program.programId
-    );
-
     const tgeDate = new BN(Math.floor(Date.now() / 1000) + 30);
     const tgePercentage = new BN(100);
     const vestingCliff = tgeDate.add(new BN(1));
@@ -59,10 +52,8 @@ describe("paidnet", () => {
     const numberOfVesting = new BN(2);
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
       [
-        anchor.utils.bytes.utf8.encode('vesting_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
+        anchor.utils.bytes.utf8.encode("vesting-storage"),
+        pool.publicKey.toBuffer()
       ],
       program.programId
     );
@@ -87,91 +78,70 @@ describe("paidnet", () => {
         vestingCliff,
         vestingFrequency,
         numberOfVesting
-      ],
-      bump,
-      vesting_bump
+      ]
     )
     .accounts({
       purchaseMint,
       idoMint,
-      poolStorageAccount,
-      vestingStorageAccount
-    }).rpc();
+      poolStorageAccount: pool.publicKey,
+      vestingStorageAccount,
+      associatedTokenProgram: ASSOCIATED_PROGRAM_ID
+    }).signers([pool]).rpc();
+    console.log(tx);
   });
 
   it ("Update Time", async () => {
     const whaleCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
     const communityCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
-    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
-      [
-        anchor.utils.bytes.utf8.encode('pool_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
-      ],
-      program.programId
-    );
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
       [
-        anchor.utils.bytes.utf8.encode('vesting_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
+        anchor.utils.bytes.utf8.encode("vesting-storage"),
+        pool.publicKey.toBuffer()
       ],
       program.programId
     );
+
     const tx = await program.methods.updateTime(
       whaleCloseTime,
       communityCloseTime
     ).accounts({
-      poolStorageAccount,
+      poolStorageAccount: pool.publicKey,
       vestingStorageAccount
     }).rpc();
+    console.log(tx);
   });
 
   it ("Update TGE date", async () => {
     const tgeDate = new BN(Math.floor(Date.now() / 1000) + 20);
-    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
-      [
-        anchor.utils.bytes.utf8.encode('pool_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
-      ],
-      program.programId
-    );
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
       [
-        anchor.utils.bytes.utf8.encode('vesting_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
+        anchor.utils.bytes.utf8.encode("vesting-storage"),
+        pool.publicKey.toBuffer()
       ],
       program.programId
     );
     const tx = await program.methods.updateTgeDate(
       tgeDate
     ).accounts({
-      poolStorageAccount,
+      poolStorageAccount: pool.publicKey,
       vestingStorageAccount
     }).rpc();
+    console.log(tx);
   });
   
   it ("Fund IDO Token", async () => {
     const amount = new BN(100 * 10 ** 9);
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
       [
-        anchor.utils.bytes.utf8.encode('vesting_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
+        anchor.utils.bytes.utf8.encode("vesting-storage"),
+        pool.publicKey.toBuffer()
       ],
       program.programId
     );
-    const [vault, bump] = PublicKey.findProgramAddressSync(
+    const [idoVault, bump] = PublicKey.findProgramAddressSync(
       [
-        vestingStorageAccount.toBuffer(),
-        idoMint.toBuffer()
+        anchor.utils.bytes.utf8.encode("ido-vault"),
+        pool.publicKey.toBuffer()
       ],
       program.programId
     );
@@ -189,7 +159,8 @@ describe("paidnet", () => {
       idoMint,
       userToken: userToken.address,
       vestingStorageAccount,
-      vault
+      idoVault,
+      poolStorageAccount: pool.publicKey
     }).rpc();
     console.log("Your transaction signature", tx);
   });
@@ -205,35 +176,25 @@ describe("paidnet", () => {
 
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
       [
-        anchor.utils.bytes.utf8.encode('vesting_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
+        anchor.utils.bytes.utf8.encode("vesting-storage"),
+        pool.publicKey.toBuffer()
       ],
       program.programId
     );
 
-    const [poolStorageAccount, bump] = PublicKey.findProgramAddressSync(
-      [
-        anchor.utils.bytes.utf8.encode('pool_storage'),
-        idoMint.toBuffer(),
-        purchaseMint.toBuffer(),
-        owner.publicKey.toBuffer()
-      ],
-      program.programId
-    );
 
     const [purchaseVault, purchaseBump] = PublicKey.findProgramAddressSync(
       [
-        poolStorageAccount.toBuffer(),
-        owner.publicKey.toBuffer()
+        anchor.utils.bytes.utf8.encode("purchase-vault"),
+        pool.publicKey.toBuffer()
       ],
       program.programId
     );
 
     const [userPurchaseAccount, _] = PublicKey.findProgramAddressSync(
       [
-        poolStorageAccount.toBuffer(),
+        anchor.utils.bytes.utf8.encode("user-purchase"),
+        pool.publicKey.toBuffer(),
         owner.publicKey.toBuffer()
       ],
       program.programId
@@ -241,7 +202,8 @@ describe("paidnet", () => {
 
     const [userVesting, __] = PublicKey.findProgramAddressSync(
       [
-        idoMint.toBuffer(),
+        anchor.utils.bytes.utf8.encode("user-vesting"),
+        pool.publicKey.toBuffer(),
         owner.publicKey.toBuffer()
       ],
       program.programId
@@ -255,12 +217,12 @@ describe("paidnet", () => {
       idoMint,
       userPurchaseToken: userPurchaseToken.address,
       vestingStorageAccount,
-      poolStorageAccount,
+      poolStorageAccount: pool.publicKey,
       purchaseVault,
       userPurchaseAccount,
       purchaseMint,
       userVesting
-    }).rpc();
+    }).rpc().catch(e => console.log(e));
     console.log("Your transaction signature", tx);
     const vesting = await program.account.userVestingAccount.all();
     const vestingData = {

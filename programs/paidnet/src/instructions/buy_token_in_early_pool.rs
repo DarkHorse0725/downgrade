@@ -22,7 +22,7 @@ pub struct BuyTokenInEarlyPool<'info> {
     #[account(
         init_if_needed,
         payer = signer,
-        seeds = [b"purchase_vault", pool_storage_account.key().as_ref()],
+        seeds = [b"purchase-vault", pool_storage_account.key().as_ref()],
         bump,
         owner = token_program.key(),
         rent_exempt = enforce,

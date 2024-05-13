@@ -8,7 +8,6 @@ use anchor_lang::prelude::*;
 use crate::state::*;
 use instructions::*;
 
-
 declare_id!("AqwFRLotetpQpfVSF9pPFAR1MqB9NmY3a9fUyjJ9nBCv");
 
 #[program]
@@ -16,10 +15,7 @@ pub mod paidnet {
     use super::*;
 
     // pool functions
-    pub fn create_pool(
-        ctx: Context<CreatePool>,
-        uints: [u64; 18],
-    ) -> Result<()> {
+    pub fn create_pool(ctx: Context<CreatePool>, uints: [u64; 18]) -> Result<()> {
         create_pool_handler(ctx, uints)
     }
 
@@ -52,7 +48,15 @@ pub mod paidnet {
         user_type: String,
         purchase_bump: u8
     ) -> Result<()> {
-        buy_token_in_open_pool_handler(ctx, purchase_amount, index, root, note, user_type, purchase_bump)
+        buy_token_in_open_pool_handler(
+            ctx,
+            purchase_amount,
+            index,
+            root,
+            note,
+            user_type,
+            purchase_bump
+        )
     }
 
     pub fn fund_ido_token(ctx: Context<FundIDO>, amount: u64, bump: u8) -> Result<()> {

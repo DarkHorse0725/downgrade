@@ -24,7 +24,7 @@ pub struct CreatePool<'info> {
         payer = signer,
         space = size_of::<VestingStorage>() + 8,
         seeds = [
-            b"vesting_storage",
+            b"vesting-storage",
             pool_storage_account.key().as_ref()
         ],
         bump
