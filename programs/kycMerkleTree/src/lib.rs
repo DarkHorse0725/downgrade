@@ -17,7 +17,7 @@ declare_id!("6K4wK6eLs4d5VEgJztdAKchepBpXwjJ85DrPVtVbT5RW");
 // STRUCTS GO HERE
 
 #[program]
-pub mod compressed_notes {
+pub mod kyc_merkle_tree {
     use super::*;
 
     // Instruction for creating a new note tree.

@@ -224,12 +224,12 @@ describe("paidnet", () => {
       userVesting
     }).rpc().catch(e => console.log(e));
     console.log("Your transaction signature", tx);
-    const vesting = await program.account.userVestingAccount.all();
-    const vestingData = {
-      publicKey: vesting[0].publicKey.toBase58(),
-      totalAmount: vesting[0].account.totalAmount.toString(),
-      claimedAmount: vesting[0].account.claimedAmount.toString()
-    }
-    console.table(vestingData);
+    // const vesting = await program.account.userVestingAccount.all();
+    // const vestingData = {
+    //   publicKey: vesting[0].publicKey.toBase58(),
+    //   totalAmount: vesting[0].account.totalAmount.toString(),
+    //   claimedAmount: vesting[0].account.claimedAmount.toString()
+    // }
+    // console.table(vestingData);
   });
 });

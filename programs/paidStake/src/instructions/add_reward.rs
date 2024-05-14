@@ -15,9 +15,9 @@ pub struct AddReward<'info> {
 
     #[account(
       has_one = owner,
-      constraint = reward_mint.key() == farm.reward_mint
+      constraint = reward_mint.key() == pool.reward_mint
     )]
-    pub farm: Account<'info, Pool>,
+    pub pool: Account<'info, Pool>,
 
     #[account(
       mut,

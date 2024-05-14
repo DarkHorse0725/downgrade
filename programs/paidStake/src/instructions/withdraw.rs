@@ -9,39 +9,39 @@ pub struct Withdraw<'info> {
     pub signer: Signer<'info>,
 
     #[account(mut)]
-    pub farm: Account<'info, Pool>,
+    pub pool: Account<'info, Pool>,
 
     #[account(mut)]
-    pub farmer: Account<'info, Staker>,
+    pub staker: Account<'info, Staker>,
 
     #[account(mut)]
-    pub farm_mint: Account<'info, Mint>,
+    pub stake_mint: Account<'info, Mint>,
 
     #[account(mut)]
-    pub farm_vault: Account<'info, TokenAccount>,
+    pub stake_vault: Account<'info, TokenAccount>,
 
     /// CHECK:
     #[account(mut)]
-    pub user_farm_token: AccountInfo<'info>,
+    pub user_stake_token: AccountInfo<'info>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
 impl<'info> Withdraw<'info> {
     pub fn withdraw(&mut self, amount: u64) -> Result<()> {
-        if self.farmer.total_staked < amount {
+        if self.staker.total_staked < amount {
             return err!(ErrCode::InvalidAmount);
         }
         let seeds: &[&[u8]; 3] = &[
             b"farm-vault",
-            self.farm.to_account_info().key.as_ref(),
-            &[self.farm.vault_bump],
+            self.pool.to_account_info().key.as_ref(),
+            &[self.pool.vault_bump],
         ];
         let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
         let cpi_accounts: Transfer = Transfer {
-            from: self.farm_vault.to_account_info(),
-            to: self.user_farm_token.to_account_info(),
-            authority: self.farm_vault.to_account_info(),
+            from: self.stake_vault.to_account_info(),
+            to: self.user_stake_token.to_account_info(),
+            authority: self.stake_vault.to_account_info(),
         };
         let cpi_program: AccountInfo = self.token_program.to_account_info();
         let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts).with_signer(
@@ -50,10 +50,10 @@ impl<'info> Withdraw<'info> {
         token::transfer(cpi_ctx, amount)?;
 
         let clock: Clock = Clock::get()?;
-        self.farmer.last_update = clock.unix_timestamp;
-        self.farmer.total_staked -= amount;
+        self.staker.last_update = clock.unix_timestamp;
+        self.staker.total_staked -= amount;
         
-        self.farm.total_staked -= amount;
+        self.pool.total_staked -= amount;
        
         msg!("Withdraw successfully");
         Ok(())

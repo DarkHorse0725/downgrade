@@ -13,7 +13,7 @@ declare_id!("8FcYYJ38nxLKWD8BN6JYs8b3yFnnXzkrL9Pfx43NNUPj");
 pub mod paid_stake {
     use super::*;
 
-    pub fn init_farm(
+    pub fn init_pool(
         ctx: Context<InitPool>,
         reward_decimals: u8,
         farm_decimals: u8,
@@ -37,7 +37,7 @@ pub mod paid_stake {
         ctx.accounts.add_reward(amount)
     }
 
-    pub fn init_farmer(
+    pub fn init_staker(
         ctx: Context<InitStaker>,
     ) -> Result<()> {
         ctx.accounts.init_staker()

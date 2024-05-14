@@ -17,9 +17,9 @@ pub struct Claim<'info> {
     pub user_reward_token: AccountInfo<'info>,
 
     #[account(mut)]
-    pub farmer: Account<'info, Staker>,
+    pub staker: Account<'info, Staker>,
     #[account(mut)]
-    pub farm: Account<'info, Pool>,
+    pub pool: Account<'info, Pool>,
 
     #[account(mut, token::mint = reward_mint)]
     pub reward_pot: Account<'info, TokenAccount>,
@@ -31,14 +31,14 @@ pub struct Claim<'info> {
 
 impl<'info> Claim<'info> {
     pub fn claim(&mut self) -> Result<()> {
-        let reward_per_block: u64 = self.farm.reward_per_block;
+        let reward_per_block: u64 = self.pool.reward_per_block;
         let clock: Clock = Clock::get()?;
         let base: u64 = 10;
         let reward: u64 =
-            ((clock.unix_timestamp - self.farmer.last_update) as u64) *
+            ((clock.unix_timestamp - self.staker.last_update) as u64) *
             reward_per_block *
-            self.farmer.total_staked /
-            base.pow((self.farm.farm_decimals) as u32);
+            self.staker.total_staked /
+            base.pow((self.pool.farm_decimals) as u32);
         if self.user_reward_token.data_is_empty() {
             let cpi_accounts: Create = Create {
                 payer: self.signer.to_account_info(),
@@ -56,8 +56,8 @@ impl<'info> Claim<'info> {
         if reward > 0 {
             let seeds: &[&[u8]; 3] = &[
                 b"reward-pot",
-                self.farm.to_account_info().key.as_ref(),
-                &[self.farm.pot_bump],
+                self.pool.to_account_info().key.as_ref(),
+                &[self.pool.pot_bump],
             ];
             let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
             let cpi_accounts: Transfer = Transfer {
@@ -73,8 +73,8 @@ impl<'info> Claim<'info> {
             token::transfer(cpi_ctx, reward)?;
 
             let clock: Clock = Clock::get()?;
-            self.farmer.last_update = clock.unix_timestamp;
-            self.farmer.withdraw += reward;
+            self.staker.last_update = clock.unix_timestamp;
+            self.staker.withdraw += reward;
         }
         msg!("claimed");
         Ok(())

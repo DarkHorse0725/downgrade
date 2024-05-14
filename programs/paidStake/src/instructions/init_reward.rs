@@ -16,14 +16,14 @@ pub struct InitReward<'info> {
     #[account(
       mut, 
       has_one = owner,
-      constraint = reward_mint.key() == farm.reward_mint
+      constraint = reward_mint.key() == pool.reward_mint
     )]
-    pub farm: Account<'info, Pool>,
+    pub pool: Account<'info, Pool>,
 
     #[account(
         init,
         payer = owner,
-        seeds = [b"reward-pot", farm.key().as_ref()],
+        seeds = [b"reward-pot", pool.key().as_ref()],
         bump,
         owner = token_program.key(),
         rent_exempt = enforce,
@@ -48,7 +48,7 @@ impl<'info> InitReward<'info> {
         let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts);
         token::transfer(cpi_ctx, amount)?;
 
-        self.farm.pot_bump = pot_bump;
+        self.pool.pot_bump = pot_bump;
 
         msg!("Init reward");
         Ok(())

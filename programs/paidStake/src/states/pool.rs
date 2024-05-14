@@ -10,7 +10,7 @@ pub struct Pool {
   pub pot_bump: u8,
   pub vault_bump: u8,
   pub total_staked: u64,
-  pub farmer_count: u64,
+  pub staker_count: u64,
   pub reward_decimals:u8,
   pub farm_decimals: u8
 }
