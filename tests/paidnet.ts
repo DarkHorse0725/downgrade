@@ -23,8 +23,8 @@ describe("paidnet", () => {
 
   const owner = provider.wallet as NodeWallet;
 
-  const idoMint = new PublicKey("7iRnKFvRgzbmMbbgYYR9QSANLHvXaV9Lv7QnPe7fyjsE");
-  const purchaseMint = new PublicKey("CBNdwTxCwVazfUQgzXZ8ZVbeg25prC5aHrdekFrmg6TD");
+  const idoMint = new PublicKey("8MEmLSMp8ZwsJo6AmksUF4AQAoX1QDySFBajwEXFUo9r");
+  const purchaseMint = new PublicKey("CnmPcd2cr85b53eCSJDKwkxmnvofKXJaHiWnCAPBeTgS");
   const decimals = 9;
 
   const pool = Keypair.generate();
@@ -182,7 +182,6 @@ describe("paidnet", () => {
       program.programId
     );
 
-
     const [purchaseVault, purchaseBump] = PublicKey.findProgramAddressSync(
       [
         anchor.utils.bytes.utf8.encode("purchase-vault"),
@@ -208,7 +207,6 @@ describe("paidnet", () => {
       ],
       program.programId
     );
-
 
     const tx = await program.methods.buyTokenInEarlyPool(
       amount,

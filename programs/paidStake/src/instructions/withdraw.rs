@@ -28,34 +28,33 @@ pub struct Withdraw<'info> {
 }
 
 impl<'info> Withdraw<'info> {
-    pub fn withdraw(&mut self, amount: u64) -> Result<()> {
-        if self.staker.total_staked < amount {
-            return err!(ErrCode::InvalidAmount);
-        }
-        let seeds: &[&[u8]; 3] = &[
-            b"farm-vault",
-            self.pool.to_account_info().key.as_ref(),
-            &[self.pool.vault_bump],
-        ];
-        let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
-        let cpi_accounts: Transfer = Transfer {
+    fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), Transfer {
             from: self.stake_vault.to_account_info(),
             to: self.user_stake_token.to_account_info(),
-            authority: self.stake_vault.to_account_info(),
-        };
-        let cpi_program: AccountInfo = self.token_program.to_account_info();
-        let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts).with_signer(
-            signer
-        );
-        token::transfer(cpi_ctx, amount)?;
-
-        let clock: Clock = Clock::get()?;
-        self.staker.last_update = clock.unix_timestamp;
-        self.staker.total_staked -= amount;
-        
-        self.pool.total_staked -= amount;
-       
-        msg!("Withdraw successfully");
-        Ok(())
+            authority: self.signer.to_account_info(),
+        })
     }
+}
+
+pub fn withdraw_handler(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+    if ctx.accounts.staker.total_staked < amount {
+        return err!(ErrCode::InvalidAmount);
+    }
+    let seeds: &[&[u8]; 3] = &[
+        b"farm-vault",
+        ctx.accounts.pool.to_account_info().key.as_ref(),
+        &[ctx.accounts.pool.vault_bump],
+    ];
+    let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
+    token::transfer(ctx.accounts.transfer_ctx().with_signer(signer), amount)?;
+
+    let clock: Clock = Clock::get()?;
+    let staker: &mut Account<Staker> = &mut ctx.accounts.staker;
+    staker.last_update = clock.unix_timestamp;
+    staker.total_staked -= amount;
+    let pool: &mut Account<Pool> = &mut ctx.accounts.pool;
+    pool.total_staked -= amount;
+    msg!("Withdraw successfully");
+    Ok(())
 }

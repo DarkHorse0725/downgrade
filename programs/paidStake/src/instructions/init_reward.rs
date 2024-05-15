@@ -37,20 +37,23 @@ pub struct InitReward<'info> {
 }
 
 impl<'info> InitReward<'info> {
-    pub fn init_reward(&mut self, amount: u64, pot_bump: u8) -> Result<()> {
-        // transfer reward token to vault
-        let cpi_accounts: Transfer = Transfer {
+    fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), Transfer {
             from: self.owner_token.to_account_info(),
             to: self.reward_pot.to_account_info(),
             authority: self.owner.to_account_info(),
-        };
-        let cpi_program: AccountInfo = self.token_program.to_account_info();
-        let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts);
-        token::transfer(cpi_ctx, amount)?;
-
-        self.pool.pot_bump = pot_bump;
-
-        msg!("Init reward");
-        Ok(())
+        })
     }
+}
+
+pub fn init_reward_handler(
+    ctx: Context<InitReward>,
+    amount: u64, 
+    pot_bump: u8,
+) -> Result<()> {
+    token::transfer(ctx.accounts.transfer_ctx(), amount)?;
+    let pool: &mut Account<Pool> = &mut ctx.accounts.pool;
+    pool.pot_bump = pot_bump;
+    msg!("Init reward");
+    Ok(())
 }

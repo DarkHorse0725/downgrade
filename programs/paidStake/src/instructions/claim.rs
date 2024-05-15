@@ -30,53 +30,52 @@ pub struct Claim<'info> {
 }
 
 impl<'info> Claim<'info> {
-    pub fn claim(&mut self) -> Result<()> {
-        let reward_per_block: u64 = self.pool.reward_per_block;
+    pub fn create_ctx(&self) -> CpiContext<'info, 'info, 'info, 'info, Create<'info>> {
+        CpiContext::new(self.associated_token_program.to_account_info(), Create {
+            payer: self.signer.to_account_info(),
+            associated_token: self.user_reward_token.clone(),
+            authority: self.signer.to_account_info(),
+            mint: self.reward_mint.to_account_info(),
+            system_program: self.system_program.to_account_info(),
+            token_program: self.token_program.to_account_info(),
+        })
+    }
+    fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), Transfer {
+            from: self.reward_pot.to_account_info(),
+            to: self.user_reward_token.to_account_info(),
+            authority: self.reward_pot.to_account_info(),
+        })
+    }
+}
+
+pub fn claim_handler(ctx: Context<Claim>) -> Result<()> {
+    let reward_per_block: u64 = ctx.accounts.pool.reward_per_block;
         let clock: Clock = Clock::get()?;
         let base: u64 = 10;
         let reward: u64 =
-            ((clock.unix_timestamp - self.staker.last_update) as u64) *
-            reward_per_block *
-            self.staker.total_staked /
-            base.pow((self.pool.farm_decimals) as u32);
-        if self.user_reward_token.data_is_empty() {
-            let cpi_accounts: Create = Create {
-                payer: self.signer.to_account_info(),
-                associated_token: self.user_reward_token.clone(),
-                authority: self.signer.to_account_info(),
-                mint: self.reward_mint.to_account_info(),
-                system_program: self.system_program.to_account_info(),
-                token_program: self.token_program.to_account_info(),
-            };
-            let cpi_program: AccountInfo = self.associated_token_program.to_account_info();
-            let cpi_ctx: CpiContext<Create> = CpiContext::new(cpi_program, cpi_accounts);
-            associated_token::create(cpi_ctx)?;
+            (((clock.unix_timestamp - ctx.accounts.staker.last_update) as u64) *
+                reward_per_block *
+                ctx.accounts.staker.total_staked) /
+            base.pow(ctx.accounts.pool.farm_decimals as u32);
+        if ctx.accounts.user_reward_token.data_is_empty() {
+            associated_token::create(ctx.accounts.create_ctx())?;
         }
 
         if reward > 0 {
             let seeds: &[&[u8]; 3] = &[
                 b"reward-pot",
-                self.pool.to_account_info().key.as_ref(),
-                &[self.pool.pot_bump],
+                ctx.accounts.pool.to_account_info().key.as_ref(),
+                &[ctx.accounts.pool.pot_bump],
             ];
             let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
-            let cpi_accounts: Transfer = Transfer {
-                from: self.reward_pot.to_account_info(),
-                to: self.user_reward_token.to_account_info(),
-                authority: self.reward_pot.to_account_info(),
-            };
-            let cpi_program: AccountInfo = self.token_program.to_account_info();
-            let cpi_ctx: CpiContext<Transfer> = CpiContext::new(
-                cpi_program,
-                cpi_accounts
-            ).with_signer(signer);
-            token::transfer(cpi_ctx, reward)?;
+            token::transfer(ctx.accounts.transfer_ctx().with_signer(signer), reward)?;
 
             let clock: Clock = Clock::get()?;
-            self.staker.last_update = clock.unix_timestamp;
-            self.staker.withdraw += reward;
+            let staker = &mut ctx.accounts.staker;
+            staker.last_update = clock.unix_timestamp;
+            staker.withdraw += reward;
         }
-        msg!("claimed");
-        Ok(())
-    }
+    msg!("claimed");
+    Ok(())
 }

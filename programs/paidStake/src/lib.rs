@@ -19,7 +19,7 @@ pub mod paid_stake {
         farm_decimals: u8,
         reward_per_block: u64,
     ) -> Result<()> {
-        ctx.accounts.init_pool(reward_decimals, farm_decimals, reward_per_block)
+        init_pool_handler(ctx, reward_decimals, farm_decimals, reward_per_block)
     }
 
     pub fn init_reward(
@@ -27,20 +27,20 @@ pub mod paid_stake {
         amount: u64,
         pot_bump: u8,
     ) -> Result<()> {
-        ctx.accounts.init_reward(amount, pot_bump)
+        init_reward_handler(ctx, amount, pot_bump)
     }
 
     pub fn add_reward(
         ctx: Context<AddReward>,
         amount: u64,
     ) -> Result<()> {
-        ctx.accounts.add_reward(amount)
+        add_reward_handler(ctx, amount)
     }
 
     pub fn init_staker(
         ctx: Context<InitStaker>,
     ) -> Result<()> {
-        ctx.accounts.init_staker()
+        init_staker_handler(ctx)
     }
 
     pub fn init_vault(
@@ -61,13 +61,13 @@ pub mod paid_stake {
     pub fn claim(
         ctx: Context<Claim>,
     ) -> Result<()> {
-        ctx.accounts.claim()
+        claim_handler(ctx)
     }
 
     pub fn withdraw(
         ctx: Context<Withdraw>,
         amount: u64,
     ) -> Result<()> {
-        ctx.accounts.withdraw(amount)
+        withdraw_handler(ctx, amount)
     }
 }

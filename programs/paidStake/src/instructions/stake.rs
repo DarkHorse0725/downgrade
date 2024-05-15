@@ -125,12 +125,12 @@ pub struct InitStaker<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> InitStaker<'info> {
-    pub fn init_staker(&mut self) -> Result<()> {
-        self.pool.staker_count += 1;
-        self.staker.total_staked = 0;
-        self.staker.withdraw = 0;
-        msg!("Init farmer");
-        Ok(())
-    }
+pub fn init_staker_handler(ctx: Context<InitStaker>) -> Result<()> {
+    let pool: &mut Account<Pool> = &mut ctx.accounts.pool;
+    let staker: &mut Account<Staker> = &mut ctx.accounts.staker;
+    pool.staker_count += 1;
+    staker.total_staked = 0;
+    staker.withdraw = 0;
+    msg!("Init farmer");
+    Ok(())
 }
