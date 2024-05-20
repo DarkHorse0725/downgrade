@@ -31,6 +31,10 @@ pub mod paidnet {
         update_tge_date_handler(ctx, tge_date)
     }
 
+    pub fn init_user(ctx: Context<InitUser>) -> Result<()> {
+        init_user_handler(ctx)
+    }
+
     pub fn buy_token_in_early_pool(
         ctx: Context<BuyTokenInEarlyPool>,
         purchase_amount: u64,

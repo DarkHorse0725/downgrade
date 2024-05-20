@@ -20,7 +20,7 @@ pub struct BuyTokenInEarlyPool<'info> {
     pub user_purchase_token: Account<'info, TokenAccount>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = signer,
         seeds = [b"purchase-vault", pool_storage_account.key().as_ref()],
         bump,
@@ -31,22 +31,10 @@ pub struct BuyTokenInEarlyPool<'info> {
     )]
     pub purchase_vault: Account<'info, TokenAccount>,
 
-    #[account(
-        init_if_needed,
-        payer = signer,
-        space = size_of::<UserPurchaseAccount>() + 8,
-        seeds = [b"user-purchase", pool_storage_account.key().as_ref(), signer.key().as_ref()],
-        bump
-    )]
+    #[account(mut)]
     pub user_purchase_account: Account<'info, UserPurchaseAccount>,
 
-    #[account(
-        init_if_needed,
-        payer = signer,
-        space = size_of::<UserVestingAccount>() + 8,
-        seeds = [b"user-vesting", pool_storage_account.key().as_ref(), signer.key().as_ref()],
-        bump
-    )]
+    #[account(mut)]
     pub user_vesting: Account<'info, UserVestingAccount>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,

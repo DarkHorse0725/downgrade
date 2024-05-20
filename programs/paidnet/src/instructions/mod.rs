@@ -7,6 +7,7 @@ pub mod fund_ido_token;
 pub mod withdraw_ido_token;
 pub mod user_withdraw_purchase;
 pub mod unlock_ido;
+pub mod init_user;
 
 pub use create_pool::*;
 pub use update_time::*;
@@ -17,3 +18,4 @@ pub use fund_ido_token::*;
 pub use withdraw_ido_token::*;
 pub use user_withdraw_purchase::*;
 pub use unlock_ido::*;
+pub use init_user::*;
