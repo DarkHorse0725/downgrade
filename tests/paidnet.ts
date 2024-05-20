@@ -80,17 +80,17 @@ describe("paidnet", () => {
         numberOfVesting
       ]
     )
-    .accounts({
-      purchaseMint,
-      idoMint,
-      poolStorageAccount: pool.publicKey,
-      vestingStorageAccount,
-      associatedTokenProgram: ASSOCIATED_PROGRAM_ID
-    }).signers([pool]).rpc();
+      .accounts({
+        purchaseMint,
+        idoMint,
+        poolStorageAccount: pool.publicKey,
+        vestingStorageAccount,
+        associatedTokenProgram: ASSOCIATED_PROGRAM_ID
+      }).signers([pool]).rpc();
     console.log(tx);
   });
 
-  it ("Update Time", async () => {
+  it("Update Time", async () => {
     const whaleCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
     const communityCloseTime = new BN(Math.floor(Date.now() / 1000) + 12);
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
@@ -111,7 +111,7 @@ describe("paidnet", () => {
     console.log(tx);
   });
 
-  it ("Update TGE date", async () => {
+  it("Update TGE date", async () => {
     const tgeDate = new BN(Math.floor(Date.now() / 1000) + 20);
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
       [
@@ -128,8 +128,8 @@ describe("paidnet", () => {
     }).rpc();
     console.log(tx);
   });
-  
-  it ("Fund IDO Token", async () => {
+
+  it("Fund IDO Token", async () => {
     const amount = new BN(100 * 10 ** 9);
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
       [
@@ -164,7 +164,33 @@ describe("paidnet", () => {
     }).rpc();
     console.log("Your transaction signature", tx);
   });
-  it ("Buy Token in early pool", async () => {
+  it("Init user", async () => {
+    const [userPurchaseAccount, _] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode("user-purchase"),
+        pool.publicKey.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+
+    const [userVesting, __] = PublicKey.findProgramAddressSync(
+      [
+        anchor.utils.bytes.utf8.encode("user-vesting"),
+        pool.publicKey.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      program.programId
+    );
+
+    const tx = await program.methods.initUser().accounts({
+      poolStorageAccount: pool.publicKey,
+      userPurchaseAccount,
+      userVesting
+    }).rpc();
+    console.log("Your transaction signature", tx);
+  })
+  it("Buy Token in early pool", async () => {
     const amount = new BN(100 * 10 ** 9);
 
     const userPurchaseToken = await getOrCreateAssociatedTokenAccount(
@@ -177,7 +203,7 @@ describe("paidnet", () => {
     const [vestingStorageAccount, vesting_bump] = PublicKey.findProgramAddressSync(
       [
         anchor.utils.bytes.utf8.encode("vesting-storage"),
-        pool.publicKey.toBuffer()
+        pool.publicKey.toBuffer(),
       ],
       program.programId
     );
@@ -220,7 +246,7 @@ describe("paidnet", () => {
       userPurchaseAccount,
       purchaseMint,
       userVesting
-    }).rpc().catch(e => console.log(e));
+    }).rpc();
     console.log("Your transaction signature", tx);
     // const vesting = await program.account.userVestingAccount.all();
     // const vestingData = {

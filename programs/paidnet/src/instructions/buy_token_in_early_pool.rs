@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, Mint, Token, TokenAccount, Transfer };
-use std::mem::size_of;
 use crate::pool_logic::{ calculate_participiant_fee, max_purchase_amount_for_early_access };
 use crate::{ PoolStorage, VestingStorage, UserPurchaseAccount, UserVestingAccount };
 use crate::error::*;
