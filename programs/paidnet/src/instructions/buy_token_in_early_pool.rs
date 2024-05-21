@@ -36,6 +36,7 @@ pub struct BuyTokenInEarlyPool<'info> {
     #[account(mut)]
     pub user_vesting: Account<'info, UserVestingAccount>,
     pub token_program: Program<'info, Token>,
+    pub clock: Sysvar<'info, Clock>,
     pub system_program: Program<'info, System>,
 }
 
@@ -56,11 +57,11 @@ pub fn buy_token_in_early_pool_handler(
 ) -> Result<()> {
     let pool_storage: &Account<PoolStorage> = &ctx.accounts.pool_storage_account;
     // validate time
-    let clock: Clock = Clock::get()?;
-    if clock.unix_timestamp > pool_storage.early_pool_close_time {
+    let now: i64 = ctx.accounts.clock.unix_timestamp as i64;
+    if now > pool_storage.early_pool_close_time {
         return err!(ErrCode::TimeOutBuyIDOToken);
     }
-    if clock.unix_timestamp < pool_storage.early_pool_open_time {
+    if now < pool_storage.early_pool_open_time {
         return err!(ErrCode::TimeOutBuyIDOToken);
     }
     // validate amount
