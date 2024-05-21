@@ -10,7 +10,7 @@ paidnet = "AqwFRLotetpQpfVSF9pPFAR1MqB9NmY3a9fUyjJ9nBCv"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Devnet"
+cluster = "Localnet"
 wallet = "/home/peace/.config/solana/id.json"
 
 [scripts]
