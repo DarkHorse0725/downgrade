@@ -85,7 +85,6 @@ describe("paidnet", () => {
         idoMint,
         poolStorageAccount: pool.publicKey,
         vestingStorageAccount,
-        associatedTokenProgram: ASSOCIATED_PROGRAM_ID
       }).signers([pool]).rpc();
     console.log(tx);
   });

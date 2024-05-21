@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{ associated_token::AssociatedToken, token::{ Mint, Token } };
+use anchor_spl::token::{ Mint, Token };
 use crate::{pool_logic::PERCENTAGE_DENOMINATOR, state::{ PoolStorage, VestingStorage }};
 use std::mem::size_of;
 use crate::error::ErrCode;
@@ -30,8 +30,6 @@ pub struct CreatePool<'info> {
         bump
     )]
     pub vesting_storage_account: Account<'info, VestingStorage>,
-
-    pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
