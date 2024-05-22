@@ -4,7 +4,12 @@ use anchor_spl::{
     token::{ self, Mint, Token, TokenAccount, Transfer },
 };
 
-use crate::{ state::{ UserPurchaseAccount, UserVestingAccount }, vesting_logic::calculate_claimable_amount, PoolStorage, VestingStorage };
+use crate::{
+    state::{ UserPurchaseAccount, UserVestingAccount },
+    vesting_logic::calculate_claimable_amount,
+    PoolStorage,
+    VestingStorage,
+};
 use crate::error::*;
 
 #[derive(Accounts)]
@@ -32,6 +37,7 @@ pub struct UnlockIDO<'info> {
 
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
+    pub clock: Sysvar<'info, Clock>,
     pub system_program: Program<'info, System>,
 }
 
@@ -71,7 +77,7 @@ pub fn unlock_ido_handler(ctx: Context<UnlockIDO>) -> Result<()> {
         associated_token::create(ctx.accounts.create_ctx())?;
     }
     // check vesting amount
-    let clock: Clock = Clock::get()?;
+    let now: i64 = ctx.accounts.clock.unix_timestamp as i64;
     let claimable_amount: u64 = calculate_claimable_amount(
         user_vesting.total_amount,
         user_purchase.withdrawn,
@@ -80,7 +86,7 @@ pub fn unlock_ido_handler(ctx: Context<UnlockIDO>) -> Result<()> {
         vesting_storage.vesting_cliff,
         vesting_storage.vesting_freguency,
         vesting_storage.number_of_vesting_release,
-        clock.unix_timestamp
+        now
     );
 
     if claimable_amount == 0 {
