@@ -38,8 +38,8 @@ pub struct BuyTokenInOpenPool<'info> {
     pub user_vesting: Account<'info, UserVestingAccount>,
     // The merkle tree account
     /// CHECK: This account is validated by the spl account compression program
-    #[account(mut)]
-    pub merkle_tree: UncheckedAccount<'info>,
+    // #[account(mut)]
+    // pub merkle_tree: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token>,
     pub compression_program: Program<'info, SplAccountCompression>,
@@ -59,10 +59,10 @@ impl<'info> BuyTokenInOpenPool<'info> {
 pub fn buy_token_in_open_pool_handler(
     ctx: Context<BuyTokenInOpenPool>,
     purchase_amount: u64,
-    index: u32,
-    root: [u8; 32],
-    note: String,
-    user_type: String,
+    // index: u32,
+    // root: [u8; 32],
+    // note: String,
+    // user_type: String,
     purchase_bump: u8
 ) -> Result<()> {
     let pool_storage: &Account<PoolStorage> = &ctx.accounts.pool_storage_account;
@@ -81,29 +81,29 @@ pub fn buy_token_in_open_pool_handler(
 
     let mut allow_purchase_amount: u64 = pool_storage.max_purchase_amount_for_not_kyc_user;
 
-    if user_type == "KYC_USER" {
-        // verfify leaf
-        let leaf: [u8; 32] = keccak
-            ::hashv(&[note.as_bytes(), pool_storage.owner.as_ref()])
-            .to_bytes();
-        let merkle_tree: Pubkey = ctx.accounts.merkle_tree.key();
-        let signer_seeds: &[&[&[u8]]] = &[
-            &[
-                merkle_tree.as_ref(), // The address of the merkle tree account as a seed
-                &[*ctx.bumps.get("tree_authority").unwrap()], // The bump seed for the pda
-            ],
-        ];
-        let cpi_ctx: CpiContext<VerifyLeaf> = CpiContext::new_with_signer(
-            ctx.accounts.compression_program.to_account_info(), // The spl account compression program
-            VerifyLeaf {
-                merkle_tree: ctx.accounts.merkle_tree.to_account_info(), // The merkle tree account to be modified
-            },
-            signer_seeds // The seeds for pda signing
-        );
-        // Verify or Fails
-        verify_leaf(cpi_ctx, root, leaf, index)?;
-        allow_purchase_amount = pool_storage.max_purchase_amount_for_kyc_user;
-    }
+    // if user_type == "KYC_USER" {
+    //     // verfify leaf
+    //     let leaf: [u8; 32] = keccak
+    //         ::hashv(&[note.as_bytes(), pool_storage.owner.as_ref()])
+    //         .to_bytes();
+    //     let merkle_tree: Pubkey = ctx.accounts.merkle_tree.key();
+    //     let signer_seeds: &[&[&[u8]]] = &[
+    //         &[
+    //             merkle_tree.as_ref(), // The address of the merkle tree account as a seed
+    //             &[*ctx.bumps.get("tree_authority").unwrap()], // The bump seed for the pda
+    //         ],
+    //     ];
+    //     let cpi_ctx: CpiContext<VerifyLeaf> = CpiContext::new_with_signer(
+    //         ctx.accounts.compression_program.to_account_info(), // The spl account compression program
+    //         VerifyLeaf {
+    //             merkle_tree: ctx.accounts.merkle_tree.to_account_info(), // The merkle tree account to be modified
+    //         },
+    //         signer_seeds // The seeds for pda signing
+    //     );
+    //     // Verify or Fails
+    //     verify_leaf(cpi_ctx, root, leaf, index)?;
+    //     allow_purchase_amount = pool_storage.max_purchase_amount_for_kyc_user;
+    // }
 
     let early_purchased: u64 = ctx.accounts.user_purchase_account.early_purchased;
     if early_purchased + purchase_amount > allow_purchase_amount {

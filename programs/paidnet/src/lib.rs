@@ -46,19 +46,19 @@ pub mod paidnet {
     pub fn buy_token_in_open_pool(
         ctx: Context<BuyTokenInOpenPool>,
         purchase_amount: u64,
-        index: u32,
-        root: [u8; 32],
-        note: String,
-        user_type: String,
+        // index: u32,
+        // root: [u8; 32],
+        // note: String,
+        // user_type: String,
         purchase_bump: u8
     ) -> Result<()> {
         buy_token_in_open_pool_handler(
             ctx,
             purchase_amount,
-            index,
-            root,
-            note,
-            user_type,
+            // index,
+            // root,
+            // note,
+            // user_type,
             purchase_bump
         )
     }
