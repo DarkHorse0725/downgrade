@@ -6,6 +6,7 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { BN } from "bn.js";
 import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
+import { PaidStake } from '../target/types/paid_stake';
 
 describe("paidnet", () => {
   // Configure the client to use the local cluster.
@@ -20,6 +21,7 @@ describe("paidnet", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.Paidnet as Program<Paidnet>;
+  const stakeProgram = anchor.workspace.PaidStake as Program<PaidStake>;
 
   const owner = provider.wallet as NodeWallet;
 
@@ -233,6 +235,14 @@ describe("paidnet", () => {
       program.programId
     );
 
+    const [staker, _staker] = PublicKey.findProgramAddressSync(
+      [
+        pool.publicKey.toBuffer(),
+        owner.publicKey.toBuffer()
+      ],
+      stakeProgram.programId
+    );
+
     const tx = await program.methods.buyTokenInEarlyPool(
       amount,
       purchaseBump
@@ -244,7 +254,8 @@ describe("paidnet", () => {
       purchaseVault,
       userPurchaseAccount,
       purchaseMint,
-      userVesting
+      userVesting,
+      stakerAccount: staker
     }).rpc();
     console.log("Your transaction signature", tx);
     // const vesting = await program.account.userVestingAccount.all();
