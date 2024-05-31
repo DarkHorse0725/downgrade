@@ -61,18 +61,22 @@ impl<'info> UnlockIDO<'info> {
     }
 }
 
+// unlock ido token after success launchpad
 pub fn unlock_ido_handler(ctx: Context<UnlockIDO>) -> Result<()> {
     let vesting_storage: &Account<VestingStorage> = &ctx.accounts.vesting_storage_account;
     let user_purchase: &Account<UserPurchaseAccount> = &ctx.accounts.user_purchase_account;
     let user_vesting: &Account<UserVestingAccount> = &ctx.accounts.user_vesting;
+    // check if allowed to claim
     if !vesting_storage.claimable {
         return err!(ErrCode::NotClaimable);
     }
 
+    // check if has claimable amount
     if user_purchase.withdrawn >= user_vesting.total_amount {
         return err!(ErrCode::AlreadyClaimedTotoalAmount);
     }
 
+    // create token account if empty
     if ctx.accounts.user_token.data_is_empty() {
         associated_token::create(ctx.accounts.create_ctx())?;
     }

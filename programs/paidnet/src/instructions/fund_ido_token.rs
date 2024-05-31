@@ -43,6 +43,7 @@ impl<'info> FundIDO<'info> {
     }
 }
 
+// deposit ido token to launchpad
 pub fn fund_ido_handler(ctx: Context<FundIDO>, amount: u64, bump: u8) -> Result<()> {
     // transfer token
     token::transfer(ctx.accounts.transfer_ctx(), amount)?;

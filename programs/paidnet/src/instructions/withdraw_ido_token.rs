@@ -38,6 +38,7 @@ impl<'info> WithdrawIDOToken<'info> {
     }
 }
 
+// withdraw ido token by creator after failed
 pub fn withdraw_ido_handler(ctx: Context<WithdrawIDOToken>, amount: u64) -> Result<()> {
     let bump: u8 = ctx.accounts.vesting_storage_account.vault_bump;
     let seeds: &[&[u8]; 3]= &[

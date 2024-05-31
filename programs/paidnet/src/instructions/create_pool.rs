@@ -34,6 +34,7 @@ pub struct CreatePool<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// create launchpad
 pub fn create_pool_handler(
     ctx: Context<CreatePool>,
     uints: [u64; 18],

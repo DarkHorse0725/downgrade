@@ -21,6 +21,7 @@ pub struct UpdateTGEDate<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// update tge date by creator
 pub fn update_tge_date_handler(ctx: Context<UpdateTGEDate>, tge_date: i64) -> Result<()> {
     let vesting_storage: &mut Account<VestingStorage> = &mut ctx.accounts.vesting_storage_account;
     let pool_storage: &Account<PoolStorage> = &ctx.accounts.pool_storage_account;

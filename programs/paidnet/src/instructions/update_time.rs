@@ -19,6 +19,7 @@ pub struct UpdateTime<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// update market time by creator
 pub fn update_time_handler(
     ctx: Context<UpdateTime>,
     early_pool_close_time: i64,

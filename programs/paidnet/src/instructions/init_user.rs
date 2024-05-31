@@ -31,14 +31,16 @@ pub struct InitUser<'info> {
     pub system_program: Program<'info, System>,
 }
 
-
+// initialze investor information if empty
 pub fn init_user_handler(ctx: Context<InitUser>) -> Result<()> {
   let user_purchase: &mut Account<UserPurchaseAccount> = &mut ctx.accounts.user_purchase_account;
+ //   initialze user purchase account 
   user_purchase.principal = 0;
   user_purchase.fee = 0;
   user_purchase.withdrawn = 0;
   user_purchase.early_purchased = 0;
   let user_vesting: &mut Account<UserVestingAccount> = &mut ctx.accounts.user_vesting;
+//   intialize use vesting account
   user_vesting.total_amount = 0;
   user_vesting.claimed_amount = 0;
   msg!("Initialized user");

@@ -51,6 +51,7 @@ impl<'info> BuyTokenInOpenPool<'info> {
     }
 }
 
+// invest in open pool
 pub fn buy_token_in_open_pool_handler(
     ctx: Context<BuyTokenInOpenPool>,
     purchase_amount: u64,
@@ -105,6 +106,7 @@ pub fn buy_token_in_open_pool_handler(
     //     return err!(ErrCode::ExceedMaxPurchaseAmountForEarlyAccess);
     // }
 
+    // calculate fee amount
     let participant_fee: u64 = calculate_participiant_fee(
         purchase_amount,
         pool_storage.early_pool_participation_fee_percentage

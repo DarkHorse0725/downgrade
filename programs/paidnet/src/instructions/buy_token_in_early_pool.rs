@@ -64,12 +64,14 @@ impl<'info> BuyTokenInEarlyPool<'info> {
     }
 }
 
+// invest in early pool
 pub fn buy_token_in_early_pool_handler(
     ctx: Context<BuyTokenInEarlyPool>,
     purchase_amount: u64,
     purchase_bump: u8
 ) -> Result<()> {
     let pool_storage: &Account<PoolStorage> = &ctx.accounts.pool_storage_account;
+    // validate stake amount
     if ctx.accounts.staker_account.total_staked < EAELRY_POOL_PARTICIPANT_STAKE_AMOUNT {
         return err!(ErrCode::NotEnoughStaker);
     }
@@ -85,7 +87,7 @@ pub fn buy_token_in_early_pool_handler(
     if purchase_amount == 0 {
         return err!(ErrCode::InvalidAmount);
     }
-
+    // calculate purchaseable amounts
     let early_purchased: u64 = ctx.accounts.user_purchase_account.early_purchased;
 
     let allow_purchase_amount: u64 = max_purchase_amount_for_early_access(
@@ -98,6 +100,7 @@ pub fn buy_token_in_early_pool_handler(
         return err!(ErrCode::ExceedMaxPurchaseAmountForEarlyAccess);
     }
 
+    // calculate fee amount
     let participant_fee: u64 = calculate_participiant_fee(
         purchase_amount,
         pool_storage.early_pool_participation_fee_percentage
@@ -110,6 +113,7 @@ pub fn buy_token_in_early_pool_handler(
 
     // send token to purchase vault
     token::transfer(ctx.accounts.transfer_ctx(), purchase_amount - participant_fee)?;
+    // send fee to stake program 
     token::transfer(ctx.accounts.transfer_fee_ctx(), participant_fee)?;
 
     // update pool info

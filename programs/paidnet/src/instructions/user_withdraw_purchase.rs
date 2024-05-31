@@ -41,6 +41,8 @@ impl<'info> UserWithdrawPurchase<'info> {
     }
 }
 
+
+// withdraw purchase token by investor when failed
 pub fn user_withdraw_purchase_handler(
     ctx: Context<UserWithdrawPurchase>,
     amount: u64
