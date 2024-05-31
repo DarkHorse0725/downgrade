@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, Mint, Token, TokenAccount, Transfer };
 use paid_stake::states::Staker;
-use crate::pool_logic::{ calculate_participiant_fee, max_purchase_amount_for_early_access };
+use crate::pool_logic::{ calculate_participiant_fee, max_purchase_amount_for_early_access, EAELRY_POOL_PARTICIPANT_STAKE_AMOUNT };
 use crate::{ PoolStorage, VestingStorage, UserPurchaseAccount, UserVestingAccount };
 use crate::error::*;
 
@@ -32,6 +32,9 @@ pub struct BuyTokenInEarlyPool<'info> {
     pub purchase_vault: Account<'info, TokenAccount>,
 
     #[account(mut)]
+    pub reward_pot: Account<'info, TokenAccount>,
+
+    #[account(mut)]
     pub staker_account: Account<'info, Staker>,
 
     #[account(mut)]
@@ -52,6 +55,13 @@ impl<'info> BuyTokenInEarlyPool<'info> {
             authority: self.signer.to_account_info(),
         })
     }
+    fn transfer_fee_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+        CpiContext::new(self.token_program.to_account_info(), Transfer {
+            from: self.user_purchase_token.to_account_info(),
+            to: self.reward_pot.to_account_info(),
+            authority: self.signer.to_account_info(),
+        })
+    }
 }
 
 pub fn buy_token_in_early_pool_handler(
@@ -60,6 +70,9 @@ pub fn buy_token_in_early_pool_handler(
     purchase_bump: u8
 ) -> Result<()> {
     let pool_storage: &Account<PoolStorage> = &ctx.accounts.pool_storage_account;
+    if ctx.accounts.staker_account.total_staked < EAELRY_POOL_PARTICIPANT_STAKE_AMOUNT {
+        return err!(ErrCode::NotEnoughStaker);
+    }
     // validate time
     let now: i64 = ctx.accounts.clock.unix_timestamp as i64;
     if now > pool_storage.early_pool_close_time {
@@ -96,7 +109,8 @@ pub fn buy_token_in_early_pool_handler(
     }
 
     // send token to purchase vault
-    token::transfer(ctx.accounts.transfer_ctx(), purchase_amount)?;
+    token::transfer(ctx.accounts.transfer_ctx(), purchase_amount - participant_fee)?;
+    token::transfer(ctx.accounts.transfer_fee_ctx(), participant_fee)?;
 
     // update pool info
     let pool: &mut Account<PoolStorage> = &mut ctx.accounts.pool_storage_account;

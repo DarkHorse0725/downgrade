@@ -7,6 +7,7 @@ pub const MAX_CROWD_FUNDING_PARTICIPATION_FEE_PERCENTAGE: u16 = 5000;
 
 pub const MAX_TGE_DATE_ADJUSTMENT: i64 = 86400 * 730; // 730 days
 pub const MAX_TGE_DATE_ADJUSTMENT_ATTEMPTS: u8 = 2;
+pub const EAELRY_POOL_PARTICIPANT_STAKE_AMOUNT: u64 = 100000000;
 
 pub fn calculate_participiant_fee(purchase_amount: u64, participation_fee_percentage: u16) -> u64 {
     if participation_fee_percentage == 0 {

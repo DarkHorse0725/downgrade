@@ -34,4 +34,6 @@ pub enum ErrCode {
     ExceedMaxPurchaseAmountForEarlyAccess,
     #[msg("Already claimed total amount")]
     AlreadyClaimedTotoalAmount,
+    #[msg("You did not stake enough token")]
+    NotEnoughStaker,
 }
