@@ -1,13 +1,9 @@
-use anchor_lang::{ prelude::*, solana_program::keccak };
+use anchor_lang:: prelude::*;
 use anchor_spl::token::{ self, Mint, Token, TokenAccount, Transfer };
 use std::mem::size_of;
 use crate::pool_logic::calculate_participiant_fee;
 use crate::{ PoolStorage, VestingStorage, UserPurchaseAccount, UserVestingAccount };
 use crate::error::*;
-use spl_account_compression::{
-    program::SplAccountCompression,
-    cpi::{ accounts::VerifyLeaf, verify_leaf },
-};
 
 #[derive(Accounts)]
 pub struct BuyTokenInOpenPool<'info> {
@@ -42,7 +38,6 @@ pub struct BuyTokenInOpenPool<'info> {
     // pub merkle_tree: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token>,
-    pub compression_program: Program<'info, SplAccountCompression>,
     pub system_program: Program<'info, System>,
 }
 
@@ -79,7 +74,7 @@ pub fn buy_token_in_open_pool_handler(
         return err!(ErrCode::InvalidAmount);
     }
 
-    let mut allow_purchase_amount: u64 = pool_storage.max_purchase_amount_for_not_kyc_user;
+    // let mut allow_purchase_amount: u64 = pool_storage.max_purchase_amount_for_not_kyc_user;
 
     // if user_type == "KYC_USER" {
     //     // verfify leaf
@@ -105,10 +100,10 @@ pub fn buy_token_in_open_pool_handler(
     //     allow_purchase_amount = pool_storage.max_purchase_amount_for_kyc_user;
     // }
 
-    let early_purchased: u64 = ctx.accounts.user_purchase_account.early_purchased;
-    if early_purchased + purchase_amount > allow_purchase_amount {
-        return err!(ErrCode::ExceedMaxPurchaseAmountForEarlyAccess);
-    }
+    // let early_purchased: u64 = ctx.accounts.user_purchase_account.early_purchased;
+    // if early_purchased + purchase_amount > allow_purchase_amount {
+    //     return err!(ErrCode::ExceedMaxPurchaseAmountForEarlyAccess);
+    // }
 
     let participant_fee: u64 = calculate_participiant_fee(
         purchase_amount,

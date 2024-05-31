@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, Mint, Token, TokenAccount, Transfer };
+use paid_stake::states::Staker;
 use crate::pool_logic::{ calculate_participiant_fee, max_purchase_amount_for_early_access };
 use crate::{ PoolStorage, VestingStorage, UserPurchaseAccount, UserVestingAccount };
 use crate::error::*;
@@ -29,6 +30,9 @@ pub struct BuyTokenInEarlyPool<'info> {
         token::authority = purchase_vault
     )]
     pub purchase_vault: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub staker_account: Account<'info, Staker>,
 
     #[account(mut)]
     pub user_purchase_account: Account<'info, UserPurchaseAccount>,

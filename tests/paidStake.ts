@@ -98,7 +98,7 @@ describe("paid stake", () => {
     console.log("Your transaction signature", tx);
   });
 
-  it ("init pool", async () => {
+  it ("init staker", async () => {
     const [staker, _] = PublicKey.findProgramAddressSync(
       [
         pool.publicKey.toBuffer(),

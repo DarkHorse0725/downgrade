@@ -20,3 +20,4 @@ anchor-lang = { version = "0.28.0", features = ["init-if-needed"] }
 anchor-spl = "0.28.0"
 spl-account-compression = { version="0.2.0", features = ["cpi"] }
 solana-program = "1.16.0"
+paidStake = {path='../paidStake', features = ["cpi"]}
