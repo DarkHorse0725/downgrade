@@ -46,6 +46,7 @@ impl<'info> InitReward<'info> {
     }
 }
 
+// first deposit reward token after creating pool
 pub fn init_reward_handler(
     ctx: Context<InitReward>,
     amount: u64, 

@@ -37,8 +37,10 @@ impl<'info> AddReward<'info> {
     }
 }
 
+// add reward to token after creating pool
 pub fn add_reward_handler(ctx: Context<AddReward>, amount: u64) -> Result<()> {
-  token::transfer(ctx.accounts.transfer_ctx(), amount)?;
+    // trafer token to vault
+    token::transfer(ctx.accounts.transfer_ctx(), amount)?;
     msg!("Init reward");
     Ok(())
 }

@@ -37,6 +37,7 @@ impl<'info> Withdraw<'info> {
     }
 }
 
+// withdraw token by staker
 pub fn withdraw_handler(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
     if ctx.accounts.staker.total_staked < amount {
         return err!(ErrCode::InvalidAmount);

@@ -49,33 +49,36 @@ impl<'info> Claim<'info> {
     }
 }
 
+// claim reward
 pub fn claim_handler(ctx: Context<Claim>) -> Result<()> {
+    // calculate reward amount
     let reward_per_block: u64 = ctx.accounts.pool.reward_per_block;
+    let clock: Clock = Clock::get()?;
+    let base: u64 = 10;
+    let reward: u64 =
+        (((clock.unix_timestamp - ctx.accounts.staker.last_update) as u64) *
+            reward_per_block *
+            ctx.accounts.staker.total_staked) /
+        base.pow(ctx.accounts.pool.farm_decimals as u32);
+    if ctx.accounts.user_reward_token.data_is_empty() {
+        associated_token::create(ctx.accounts.create_ctx())?;
+    }
+
+    // transfer reward to user
+    if reward > 0 {
+        let seeds: &[&[u8]; 3] = &[
+            b"reward-pot",
+            ctx.accounts.pool.to_account_info().key.as_ref(),
+            &[ctx.accounts.pool.pot_bump],
+        ];
+        let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
+        token::transfer(ctx.accounts.transfer_ctx().with_signer(signer), reward)?;
+
         let clock: Clock = Clock::get()?;
-        let base: u64 = 10;
-        let reward: u64 =
-            (((clock.unix_timestamp - ctx.accounts.staker.last_update) as u64) *
-                reward_per_block *
-                ctx.accounts.staker.total_staked) /
-            base.pow(ctx.accounts.pool.farm_decimals as u32);
-        if ctx.accounts.user_reward_token.data_is_empty() {
-            associated_token::create(ctx.accounts.create_ctx())?;
-        }
-
-        if reward > 0 {
-            let seeds: &[&[u8]; 3] = &[
-                b"reward-pot",
-                ctx.accounts.pool.to_account_info().key.as_ref(),
-                &[ctx.accounts.pool.pot_bump],
-            ];
-            let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
-            token::transfer(ctx.accounts.transfer_ctx().with_signer(signer), reward)?;
-
-            let clock: Clock = Clock::get()?;
-            let staker = &mut ctx.accounts.staker;
-            staker.last_update = clock.unix_timestamp;
-            staker.withdraw += reward;
-        }
+        let staker = &mut ctx.accounts.staker;
+        staker.last_update = clock.unix_timestamp;
+        staker.withdraw += reward;
+    }
     msg!("claimed");
     Ok(())
 }

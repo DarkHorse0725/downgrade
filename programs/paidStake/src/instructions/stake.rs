@@ -82,6 +82,7 @@ pub struct InitVault<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// intialize stake token vault when first deposit
 impl<'info> InitVault<'info> {
     pub fn init_vault(&mut self, amount: u64, vault_bump: u8) -> Result<()> {
         // transfer reward token to vault
@@ -94,6 +95,7 @@ impl<'info> InitVault<'info> {
         let cpi_ctx: CpiContext<Transfer> = CpiContext::new(cpi_program, cpi_accounts);
         token::transfer(cpi_ctx, amount)?;
 
+        // update staker info
         let clock: Clock = Clock::get()?;
         self.pool.total_staked = amount;
         self.pool.vault_bump = vault_bump;
