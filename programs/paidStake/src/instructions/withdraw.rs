@@ -8,14 +8,18 @@ pub struct Withdraw<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    // @dev pool account
     #[account(mut)]
     pub pool: Box<Account<'info, Pool>>,
 
+    // @dev staker account
     #[account(mut)]
     pub staker: Box<Account<'info, Staker>>,
 
+    // @dev mint address of stake token
     pub stake_mint: Box<Account<'info, Mint>>,
 
+    // @dev stake vault
     #[account(mut)]
     pub stake_vault: Account<'info, TokenAccount>,
 

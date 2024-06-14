@@ -11,16 +11,21 @@ pub struct Claim<'info> {
     #[account(mut)]
     signer: Signer<'info>,
 
+    // @dev mint address of reward token
     pub reward_mint: Box<Account<'info, Mint>>,
+    // @dev reward token account of user
     /// CHECK:
     #[account(mut)]
     pub user_reward_token: AccountInfo<'info>,
 
+    // @dev staker account
     #[account(mut)]
     pub staker: Box<Account<'info, Staker>>,
+    // pool account
     #[account(mut)]
     pub pool: Account<'info, Pool>,
 
+    // @dev reward pot
     #[account(mut, token::mint = reward_mint)]
     pub reward_pot: Account<'info, TokenAccount>,
 

@@ -8,17 +8,21 @@ pub struct FundReward<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    // mint address of reward token
     pub reward_mint: Box<Account<'info, Mint>>,
 
+    // @dev reward token account of owner
     #[account(mut,token::mint = reward_mint)]
     pub owner_token: Account<'info, TokenAccount>,
 
+    // @dev pool account
     #[account(
       mut, 
       constraint = reward_mint.key() == pool.reward_mint
     )]
     pub pool: Box<Account<'info, Pool>>,
 
+    // @dev reward pot
     #[account(
         init_if_needed,
         payer = signer,

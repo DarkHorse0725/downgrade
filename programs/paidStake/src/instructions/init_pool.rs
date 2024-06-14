@@ -9,9 +9,12 @@ pub struct InitPool<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    // @dev mint address of reward token
     pub reward_mint: Box<Account<'info, Mint>>,
+    // @dev mint address of stake token
     pub stake_mint: Box<Account<'info, Mint>>,
 
+    // @dev pool account
     #[account(init, payer = owner, space = size_of::<Pool>() + 8)]
     pub pool: Box<Account<'info, Pool>>,
 

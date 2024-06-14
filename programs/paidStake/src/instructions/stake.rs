@@ -9,10 +9,13 @@ pub struct Stake<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    // @dev mint address of stake token
     pub stake_mint: Box<Account<'info, Mint>>,
+    // @dev pool account
     #[account(mut)]
     pub pool: Box<Account<'info, Pool>>,
 
+    // @dev staker account
     #[account(
         init_if_needed,
         payer = signer,
@@ -22,9 +25,11 @@ pub struct Stake<'info> {
     )]
     pub staker: Account<'info, Staker>,
 
+    // @dev stake token account of user
     #[account(mut, token::mint = stake_mint)]
     pub user_token: Account<'info, TokenAccount>,
 
+    // @dev stake vault
     #[account(
         init_if_needed,
         payer = signer,
