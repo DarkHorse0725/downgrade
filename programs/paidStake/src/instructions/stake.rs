@@ -9,12 +9,12 @@ pub struct Stake<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    pub stake_mint: Account<'info, Mint>,
+    pub stake_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
-    pub pool: Account<'info, Pool>,
+    pub pool: Box<Account<'info, Pool>>,
 
     #[account(mut)]
-    pub staker: Account<'info, Staker>,
+    pub staker: Box<Account<'info, Staker>>,
 
     #[account(mut, token::mint = stake_mint)]
     pub user_token: Account<'info, TokenAccount>,

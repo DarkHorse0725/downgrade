@@ -11,13 +11,13 @@ pub struct Claim<'info> {
     #[account(mut)]
     signer: Signer<'info>,
 
-    pub reward_mint: Account<'info, Mint>,
+    pub reward_mint: Box<Account<'info, Mint>>,
     /// CHECK:
     #[account(mut)]
     pub user_reward_token: AccountInfo<'info>,
 
     #[account(mut)]
-    pub staker: Account<'info, Staker>,
+    pub staker: Box<Account<'info, Staker>>,
     #[account(mut)]
     pub pool: Account<'info, Pool>,
 

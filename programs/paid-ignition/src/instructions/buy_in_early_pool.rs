@@ -1,28 +1,35 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{ self, Mint, Token, TokenAccount, Transfer };
-use paid_stake::states::Staker;
-use crate::pool_logic::{ calculate_participiant_fee, max_purchase_amount_for_early_access, EAELRY_POOL_PARTICIPANT_STAKE_AMOUNT };
-use crate::{ PoolStorage, VestingStorage, UserPurchaseAccount, UserVestingAccount };
-use crate::error::*;
+
+use crate::{
+    calculate_participiant_fee,
+    error::ErrCode,
+    max_purchase_amount_for_early_access,
+    Buyer,
+    Pool,
+};
+use std::mem::size_of;
 
 #[derive(Accounts)]
-pub struct BuyTokenInEarlyPool<'info> {
+pub struct BuyInEarlyPool<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    pub ido_mint: Account<'info, Mint>,
-    pub purchase_mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub pool_storage_account: Account<'info, PoolStorage>,
-    pub vesting_storage_account: Account<'info, VestingStorage>,
-
-    #[account(mut)]
-    pub user_purchase_token: Account<'info, TokenAccount>,
+    pub purchase_mint: Box<Account<'info, Mint>>,
 
     #[account(
-        init,
+    mut,
+    token::mint = purchase_mint,
+  )]
+    pub user_purchase_token: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub pool: Box<Account<'info, Pool>>,
+
+    #[account(
+        init_if_needed,
         payer = signer,
-        seeds = [b"purchase-vault", pool_storage_account.key().as_ref()],
+        seeds = [b"purchase-vault", pool.key().as_ref()],
         bump,
         owner = token_program.key(),
         rent_exempt = enforce,
@@ -31,23 +38,21 @@ pub struct BuyTokenInEarlyPool<'info> {
     )]
     pub purchase_vault: Account<'info, TokenAccount>,
 
-    #[account(mut)]
-    pub reward_pot: Account<'info, TokenAccount>,
+    #[account(
+        init_if_needed,
+        payer = signer,
+        space = size_of::<Buyer>() + 8,
+        seeds = [b"buyer", pool.key().as_ref(), signer.key().as_ref()],
+        bump
+    )]
+    pub buyer: Box<Account<'info, Buyer>>,
 
-    #[account(mut)]
-    pub staker_account: Account<'info, Staker>,
-
-    #[account(mut)]
-    pub user_purchase_account: Account<'info, UserPurchaseAccount>,
-
-    #[account(mut)]
-    pub user_vesting: Account<'info, UserVestingAccount>,
     pub token_program: Program<'info, Token>,
     pub clock: Sysvar<'info, Clock>,
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> BuyTokenInEarlyPool<'info> {
+impl<'info> BuyInEarlyPool<'info> {
     fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         CpiContext::new(self.token_program.to_account_info(), Transfer {
             from: self.user_purchase_token.to_account_info(),
@@ -55,26 +60,18 @@ impl<'info> BuyTokenInEarlyPool<'info> {
             authority: self.signer.to_account_info(),
         })
     }
-    fn transfer_fee_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
-        CpiContext::new(self.token_program.to_account_info(), Transfer {
-            from: self.user_purchase_token.to_account_info(),
-            to: self.reward_pot.to_account_info(),
-            authority: self.signer.to_account_info(),
-        })
-    }
 }
 
-// invest in early pool
-pub fn buy_token_in_early_pool_handler(
-    ctx: Context<BuyTokenInEarlyPool>,
+pub fn buy_in_early_pool_handler(
+    ctx: Context<BuyInEarlyPool>,
     purchase_amount: u64,
-    purchase_bump: u8
+    bump: u8
 ) -> Result<()> {
-    let pool_storage: &Account<PoolStorage> = &ctx.accounts.pool_storage_account;
+    let pool_storage: &Box<Account<Pool>> = &ctx.accounts.pool;
     // validate stake amount
-    if ctx.accounts.staker_account.total_staked < EAELRY_POOL_PARTICIPANT_STAKE_AMOUNT {
-        return err!(ErrCode::NotEnoughStaker);
-    }
+    // if ctx.accounts.buyer.total_staked < EAELRY_POOL_PARTICIPANT_STAKE_AMOUNT {
+    //     return err!(ErrCode::NotEnoughStaker);
+    // }
     // validate time
     let now: i64 = ctx.accounts.clock.unix_timestamp as i64;
     if now > pool_storage.early_pool_close_time {
@@ -88,7 +85,7 @@ pub fn buy_token_in_early_pool_handler(
         return err!(ErrCode::InvalidAmount);
     }
     // calculate purchaseable amounts
-    let early_purchased: u64 = ctx.accounts.user_purchase_account.early_purchased;
+    let early_purchased: u64 = ctx.accounts.buyer.early_purchased;
 
     let allow_purchase_amount: u64 = max_purchase_amount_for_early_access(
         pool_storage.total_raise_amount,
@@ -106,28 +103,26 @@ pub fn buy_token_in_early_pool_handler(
         pool_storage.early_pool_participation_fee_percentage
     );
     let ido_amount: u64 = (purchase_amount - participant_fee) * pool_storage.offered_currency.rate;
-    let vesting_storage: &Account<VestingStorage> = &ctx.accounts.vesting_storage_account;
+    let vesting_storage = &ctx.accounts.pool;
     if !vesting_storage.funded {
         return err!(ErrCode::NotFunded);
     }
 
     // send token to purchase vault
     token::transfer(ctx.accounts.transfer_ctx(), purchase_amount - participant_fee)?;
-    // send fee to stake program 
-    token::transfer(ctx.accounts.transfer_fee_ctx(), participant_fee)?;
+    // send fee to stake program
+    // token::transfer(ctx.accounts.transfer_fee_ctx(), participant_fee)?;
 
     // update pool info
-    let pool: &mut Account<PoolStorage> = &mut ctx.accounts.pool_storage_account;
-    pool.purchase_bump = purchase_bump;
+    let pool = &mut ctx.accounts.pool;
+    pool.purchase_bump = bump;
     pool.purchased_amount += purchase_amount;
     // update user vesting info
-    let user_vesting: &mut Account<UserVestingAccount> = &mut ctx.accounts.user_vesting;
-    user_vesting.total_amount += ido_amount;
+    let buyer: &mut Box<Account<Buyer>> = &mut ctx.accounts.buyer;
+    buyer.total_amount += ido_amount;
     // update user purchase info
-    let user: &mut Account<UserPurchaseAccount> = &mut ctx.accounts.user_purchase_account;
-    user.early_purchased += purchase_amount - participant_fee;
-    user.principal += purchase_amount - participant_fee;
-    user.fee += participant_fee;
+    buyer.early_purchased += purchase_amount - participant_fee;
+    buyer.total_purchase += purchase_amount - participant_fee;
 
     msg!("Bought token");
     Ok(())

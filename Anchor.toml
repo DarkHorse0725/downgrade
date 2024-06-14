@@ -1,16 +1,19 @@
+[toolchain]
+
 [features]
 seeds = false
 skip-lint = false
+
 [programs.localnet]
 kycMerkleTree = "6K4wK6eLs4d5VEgJztdAKchepBpXwjJ85DrPVtVbT5RW"
 paidStake = "8FcYYJ38nxLKWD8BN6JYs8b3yFnnXzkrL9Pfx43NNUPj"
-paidnet = "AqwFRLotetpQpfVSF9pPFAR1MqB9NmY3a9fUyjJ9nBCv"
+paidnet = "EfomQSjz9bXS183uXsmEMEqCeAZUQ6bUvWPnAFgVNvpY"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Devnet"
+cluster = "Localnet"
 wallet = "/home/peace/.config/solana/id.json"
 
 [scripts]

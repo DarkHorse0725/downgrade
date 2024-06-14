@@ -8,7 +8,7 @@ pub struct InitReward<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
-    pub reward_mint: Account<'info, Mint>,
+    pub reward_mint: Box<Account<'info, Mint>>,
 
     #[account(mut,token::mint = reward_mint, token::authority = owner)]
     pub owner_token: Account<'info, TokenAccount>,
@@ -18,7 +18,7 @@ pub struct InitReward<'info> {
       has_one = owner,
       constraint = reward_mint.key() == pool.reward_mint
     )]
-    pub pool: Account<'info, Pool>,
+    pub pool: Box<Account<'info, Pool>>,
 
     #[account(
         init,

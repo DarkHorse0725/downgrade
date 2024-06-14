@@ -9,13 +9,12 @@ pub struct Withdraw<'info> {
     pub signer: Signer<'info>,
 
     #[account(mut)]
-    pub pool: Account<'info, Pool>,
+    pub pool: Box<Account<'info, Pool>>,
 
     #[account(mut)]
-    pub staker: Account<'info, Staker>,
+    pub staker: Box<Account<'info, Staker>>,
 
-    #[account(mut)]
-    pub stake_mint: Account<'info, Mint>,
+    pub stake_mint: Box<Account<'info, Mint>>,
 
     #[account(mut)]
     pub stake_vault: Account<'info, TokenAccount>,

@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{ self, Token, TokenAccount, Transfer },
 };
 
-use crate::{ state::{ UserPurchaseAccount, UserVestingAccount }, PoolStorage };
+use crate::{ Buyer, Pool };
 
 #[derive(Accounts)]
 pub struct UserWithdrawPurchase<'info> {
@@ -15,13 +15,14 @@ pub struct UserWithdrawPurchase<'info> {
     pub user_purchase_token: Account<'info, TokenAccount>,
 
     #[account(mut)]
-    pub user_vesting: Account<'info, UserVestingAccount>,
+    pub pool: Box<Account<'info, Pool>>,
 
-    #[account(mut)]
-    pub user_purchase_account: Account<'info, UserPurchaseAccount>,
-
-    #[account(mut, constraint = signer.key() == pool_storage_account.owner)]
-    pub pool_storage_account: Account<'info, PoolStorage>,
+    #[account(
+      mut,
+      seeds = [b"buyer", pool.key().as_ref(), signer.key().as_ref()],
+      bump
+    )]
+    pub buyer: Box<Account<'info, Buyer>>,
 
     #[account(mut)]
     pub purchase_vault: Account<'info, TokenAccount>,
@@ -41,13 +42,12 @@ impl<'info> UserWithdrawPurchase<'info> {
     }
 }
 
-
 // withdraw purchase token by investor when failed
 pub fn user_withdraw_purchase_handler(
     ctx: Context<UserWithdrawPurchase>,
     amount: u64
 ) -> Result<()> {
-    let pool_storage: &Account<PoolStorage> = &ctx.accounts.pool_storage_account;
+    let pool_storage: &Box<Account<Pool>> = &ctx.accounts.pool;
     // send spl-token
     let seeds: &[&[u8]; 3] = &[
         b"purchase-vault",
