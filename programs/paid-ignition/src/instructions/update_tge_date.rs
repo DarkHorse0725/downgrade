@@ -14,10 +14,11 @@ pub struct UpdateTgeDate <'info> {
   pub pool: Box<Account<'info, Pool>>,
 }
 
-
+// @dev it allows to update tge date by creator
 pub fn update_tge_date_handler(ctx: Context<UpdateTgeDate>, tge_date: i64) -> Result<()> {
   let pool = &mut ctx.accounts.pool;
 
+  // validate new tge date
   if pool.open_pool_close_time > tge_date {
       return err!(ErrCode::InvalidTime);
   }

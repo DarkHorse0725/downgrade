@@ -42,6 +42,7 @@ pub fn create_pool_handler(ctx: Context<CreatePool>, uints: [u64; 18]) -> Result
     if uints[10] > uints[13] {
         return err!(ErrCode::InvalidTime);
     }
+    // format pool info
     let pool: &mut Box<Account<Pool>> = &mut ctx.accounts.pool;
     pool.max_purchase_amount_for_kyc_user = uints[0];
     pool.max_purchase_amount_for_not_kyc_user = uints[1];

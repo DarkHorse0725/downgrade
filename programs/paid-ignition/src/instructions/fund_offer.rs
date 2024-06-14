@@ -48,7 +48,7 @@ impl<'info> FundOffer<'info> {
         })
     }
 }
-
+// @dev allowed to deposit ido token by creator after creating pool
 pub fn fund_offer_handler(ctx: Context<FundOffer>, amount: u64, bump: u8) -> Result<()> {
     // transfer token
     token::transfer(ctx.accounts.transfer_ctx(), amount)?;

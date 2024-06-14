@@ -40,15 +40,17 @@ impl<'info> WithdrawOffer<'info> {
     }
 }
 
-// withdraw ido token by creator after failed
+// @dev allowed to withdraw ido token by creator if failed
 pub fn withdraw_offer_handler(ctx: Context<WithdrawOffer>, amount: u64) -> Result<()> {
     let bump: u8 = ctx.accounts.pool.offered_bump;
+    // seed of authority pda of offer vault
     let seeds: &[&[u8]; 3] = &[
         b"offer-vault",
         ctx.accounts.pool.to_account_info().key.as_ref(),
         &[bump],
     ];
     let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
+    // transfer token to creator token account
     token::transfer(ctx.accounts.transfer_ctx().with_signer(signer), amount)?;
     msg!("Withdraw ido token");
     Ok(())

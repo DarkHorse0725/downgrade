@@ -56,6 +56,7 @@ impl<'info> BuyInOpenPool<'info> {
     }
 }
 
+// @dev allow to buy token by user in open pool
 pub fn buy_in_open_pool_handler(
     ctx: Context<BuyInOpenPool>,
     purchase_amount: u64,

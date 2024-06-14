@@ -14,7 +14,7 @@ pub struct UpdateTime<'info> {
     pub pool: Box<Account<'info, Pool>>,
 }
 
-// update market time by creator
+// @dev it allows to update time by creator
 pub fn update_time_handler(
     ctx: Context<UpdateTime>,
     early_pool_close_time: i64,

@@ -62,6 +62,7 @@ impl<'info> BuyInEarlyPool<'info> {
     }
 }
 
+// @dev allowed to buy ido token by user after started early pool
 pub fn buy_in_early_pool_handler(
     ctx: Context<BuyInEarlyPool>,
     purchase_amount: u64,
@@ -114,7 +115,7 @@ pub fn buy_in_early_pool_handler(
     // token::transfer(ctx.accounts.transfer_fee_ctx(), participant_fee)?;
 
     // update pool info
-    let pool = &mut ctx.accounts.pool;
+    let pool: &mut Box<Account<Pool>> = &mut ctx.accounts.pool;
     pool.purchase_bump = bump;
     pool.purchased_amount += purchase_amount;
     // update user vesting info
