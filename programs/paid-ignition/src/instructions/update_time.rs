@@ -7,6 +7,7 @@ pub struct UpdateTime<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    // @dev pool account
     #[account(
       mut,
       has_one = owner,

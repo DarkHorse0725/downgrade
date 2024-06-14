@@ -7,7 +7,7 @@ skip-lint = false
 [programs.localnet]
 kycMerkleTree = "6K4wK6eLs4d5VEgJztdAKchepBpXwjJ85DrPVtVbT5RW"
 paidStake = "8FcYYJ38nxLKWD8BN6JYs8b3yFnnXzkrL9Pfx43NNUPj"
-paidnet = "EfomQSjz9bXS183uXsmEMEqCeAZUQ6bUvWPnAFgVNvpY"
+paidIgnition = "EfomQSjz9bXS183uXsmEMEqCeAZUQ6bUvWPnAFgVNvpY"
 
 [registry]
 url = "https://api.apr.dev"

@@ -15,14 +15,18 @@ pub struct ClaimOffer<'info> {
     #[account(mut)]
     pub user_token: AccountInfo<'info>,
 
+    // mint address of ido token
     pub offer_mint: Box<Account<'info, Mint>>,
 
+    // pool account
     #[account(mut)]
     pub pool: Box<Account<'info, Pool>>,
 
+    // buyer account
     #[account(mut)]
     pub buyer: Box<Account<'info, Buyer>>,
 
+    // offer vault
     #[account(
         mut,
         seeds = [b"offer-vault", pool.key().as_ref()],

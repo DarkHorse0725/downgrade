@@ -11,17 +11,21 @@ pub struct WithdrawOffer<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    // @dev ido token account of owner
     #[account(mut)]
     pub owner_offer_token: Account<'info, TokenAccount>,
 
+    // @dev mint address of ido token
     pub offer_mint: Box<Account<'info, Mint>>,
 
+    // @dev offer vault
     #[account(
         mut,
         token::mint = offer_mint
     )]
     pub offer_vault: Account<'info, TokenAccount>,
 
+    // @dev pool account
     #[account(mut)]
     pub pool: Box<Account<'info, Pool>>,
 

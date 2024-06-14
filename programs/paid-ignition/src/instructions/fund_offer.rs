@@ -11,17 +11,21 @@ pub struct FundOffer<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    // mint address of ido token
     pub offer_mint: Box<Account<'info, Mint>>,
 
+    // ido token account of owner
     #[account(
       mut,
       token::mint = offer_mint,
     )]
     pub owner_token: Account<'info, TokenAccount>,
 
+    // pool account
     #[account(mut)]
     pub pool: Box<Account<'info, Pool>>,
 
+    // offer vault
     #[account(
         init_if_needed,
         payer = owner,

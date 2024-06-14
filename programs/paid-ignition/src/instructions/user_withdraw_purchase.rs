@@ -11,12 +11,15 @@ pub struct UserWithdrawPurchase<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    // @dev purchase token account of user
     #[account(mut)]
     pub user_purchase_token: Account<'info, TokenAccount>,
 
+    // @dev pool account
     #[account(mut)]
     pub pool: Box<Account<'info, Pool>>,
 
+    // @dev buyer account
     #[account(
       mut,
       seeds = [b"buyer", pool.key().as_ref(), signer.key().as_ref()],
@@ -24,6 +27,7 @@ pub struct UserWithdrawPurchase<'info> {
     )]
     pub buyer: Box<Account<'info, Buyer>>,
 
+    // @dev purchase account
     #[account(mut)]
     pub purchase_vault: Account<'info, TokenAccount>,
 

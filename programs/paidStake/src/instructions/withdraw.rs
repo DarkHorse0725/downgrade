@@ -31,24 +31,27 @@ impl<'info> Withdraw<'info> {
         CpiContext::new(self.token_program.to_account_info(), Transfer {
             from: self.stake_vault.to_account_info(),
             to: self.user_stake_token.to_account_info(),
-            authority: self.signer.to_account_info(),
+            authority: self.stake_vault.to_account_info(),
         })
     }
 }
 
-// withdraw token by staker
+// @dev withdraw token by staker
 pub fn withdraw_handler(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
     if ctx.accounts.staker.total_staked < amount {
         return err!(ErrCode::InvalidAmount);
     }
+    // seeds of authority pda of stake vault
     let seeds: &[&[u8]; 3] = &[
-        b"farm-vault",
+        b"stake-vault",
         ctx.accounts.pool.to_account_info().key.as_ref(),
         &[ctx.accounts.pool.vault_bump],
     ];
     let signer: &[&[&[u8]]; 1] = &[&seeds[..]];
+    // transfer token to user token account
     token::transfer(ctx.accounts.transfer_ctx().with_signer(signer), amount)?;
 
+    // update staker info
     let clock: Clock = Clock::get()?;
     let staker: &mut Account<Staker> = &mut ctx.accounts.staker;
     staker.last_update = clock.unix_timestamp;

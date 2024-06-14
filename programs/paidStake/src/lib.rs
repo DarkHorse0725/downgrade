@@ -23,39 +23,19 @@ pub mod paid_stake {
     }
 
     pub fn init_reward(
-        ctx: Context<InitReward>,
+        ctx: Context<FundReward>,
         amount: u64,
         pot_bump: u8,
     ) -> Result<()> {
-        init_reward_handler(ctx, amount, pot_bump)
-    }
-
-    pub fn add_reward(
-        ctx: Context<AddReward>,
-        amount: u64,
-    ) -> Result<()> {
-        add_reward_handler(ctx, amount)
-    }
-
-    pub fn init_staker(
-        ctx: Context<InitStaker>,
-    ) -> Result<()> {
-        init_staker_handler(ctx)
-    }
-
-    pub fn init_vault(
-        ctx: Context<InitVault>,
-        amount: u64,
-        vault_bump: u8,
-    ) -> Result<()> {
-        ctx.accounts.init_vault(amount, vault_bump)
+        fund_reward_handler(ctx, amount, pot_bump)
     }
 
     pub fn stake(
         ctx: Context<Stake>,
-        amount: u64
+        amount: u64,
+        bump: u8,
     ) -> Result<()> {
-        ctx.accounts.stake(amount)
+       stake_handler(ctx, amount, bump)
     }
 
     pub fn claim(

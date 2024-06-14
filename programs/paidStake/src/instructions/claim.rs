@@ -49,7 +49,7 @@ impl<'info> Claim<'info> {
     }
 }
 
-// claim reward
+// @dev claim reward by staker
 pub fn claim_handler(ctx: Context<Claim>) -> Result<()> {
     // calculate reward amount
     let reward_per_block: u64 = ctx.accounts.pool.reward_per_block;
@@ -59,7 +59,7 @@ pub fn claim_handler(ctx: Context<Claim>) -> Result<()> {
         (((clock.unix_timestamp - ctx.accounts.staker.last_update) as u64) *
             reward_per_block *
             ctx.accounts.staker.total_staked) /
-        base.pow(ctx.accounts.pool.farm_decimals as u32);
+        base.pow(ctx.accounts.pool.stake_decimals as u32);
     if ctx.accounts.user_reward_token.data_is_empty() {
         associated_token::create(ctx.accounts.create_ctx())?;
     }

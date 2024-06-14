@@ -18,23 +18,24 @@ pub struct InitPool<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// initialize pool
+// @dev initialize pool by owner after deploy
 pub fn init_pool_handler(
     ctx: Context<InitPool>,
     reward_decimals: u8,
     farm_decimals: u8,
     reward_per_block: u64
 ) -> Result<()> {
+    // format pool info
     let pool: &mut Account<Pool> = &mut ctx.accounts.pool;
     pool.owner = ctx.accounts.owner.key();
     pool.reward_mint = ctx.accounts.reward_mint.key();
     pool.reward_per_block = reward_per_block;
-    pool.farm_mint = ctx.accounts.stake_mint.key();
+    pool.stake_mint = ctx.accounts.stake_mint.key();
     pool.total_staked = 0;
     pool.staker_count = 0;
     pool.reward_decimals = reward_decimals;
-    pool.farm_decimals = farm_decimals;
+    pool.stake_decimals = farm_decimals;
 
-    msg!("Create farm");
+    msg!("Create pool");
     Ok(())
 }

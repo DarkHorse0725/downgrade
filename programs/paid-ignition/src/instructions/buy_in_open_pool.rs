@@ -9,17 +9,21 @@ pub struct BuyInOpenPool<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    // @dev mint address of purchase token
     pub purchase_mint: Box<Account<'info, Mint>>,
 
+    // @dev user purchase token account
     #[account(
       mut,
       token::mint = purchase_mint,
     )]
     pub user_purchase_token: Account<'info, TokenAccount>,
 
+    // @dev pool account
     #[account(mut)]
     pub pool: Box<Account<'info, Pool>>,
 
+    // @dev purchase token vault
     #[account(
         init_if_needed,
         payer = signer,
@@ -32,6 +36,7 @@ pub struct BuyInOpenPool<'info> {
     )]
     pub purchase_vault: Account<'info, TokenAccount>,
 
+    // @dev buyer account
     #[account(
         init_if_needed,
         payer = signer,

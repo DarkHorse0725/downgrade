@@ -8,9 +8,12 @@ pub struct CreatePool<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
 
+    // mint address of purchase token
     pub purchase_mint: Box<Account<'info, Mint>>,
+    // mint address of ido token
     pub offer_mint: Box<Account<'info, Mint>>,
 
+    // pool account
     #[account(init, payer = creator, space = size_of::<Pool>() + 8)]
     pub pool: Box<Account<'info, Pool>>,
 
